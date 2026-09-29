@@ -75,8 +75,11 @@ html {
   color-scheme: light dark;
 }
 
+/* Smooth scrolling is enabled only after the page has loaded (MotionProvider sets the
+   attribute). If it were on from the start, the browser's jump to a #anchor in the URL
+   would be animated and get interrupted during page load, leaving visitors at the top. */
 @media (prefers-reduced-motion: no-preference) {
-  html {
+  html[data-smooth-scroll] {
     scroll-behavior: smooth;
   }
 }
