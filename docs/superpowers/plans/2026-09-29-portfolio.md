@@ -2,34 +2,39 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a one-page, responsive, animated portfolio (Hero, Projects, Skills, Contact) in Next.js, ready to deploy on Vercel.
+**Goal:** Build a one-page, responsive, animated portfolio (Hero, Projects, Skills, Contact with a working email form) in Next.js, ready to deploy on Vercel.
 
-**Architecture:** Next.js App Router with mostly Server Components. All personal content lives in `data/content.ts`. Colors are CSS variables in `app/globals.css` (light + dark via `prefers-color-scheme`), exposed to Tailwind v4 through `@theme inline`. Motion is used only in two small client components (`FadeIn`, `Navbar`), and hover effects are CSS.
+**Architecture:** Next.js App Router with mostly Server Components. All personal content lives in `data/content.ts`. Colors are CSS variables in `app/globals.css` (light + dark via `prefers-color-scheme`), exposed to Tailwind v4 through `@theme inline`. Motion is used only in `FadeIn` and `Navbar`, and hover effects are CSS. The contact form posts to one REST endpoint, `POST /api/contact`, whose logic lives in small `lib/` files. Those files take their dependencies (email verification, email sending) as parameters, so Node's built-in test runner can test them without the network.
 
-**Tech Stack:** Next.js 16, React 19, TypeScript, Tailwind CSS 4, Motion 13 (`motion/react`), Node 24, npm, Vercel.
+**Tech Stack:** Next.js 16, React 19, TypeScript, Tailwind CSS 4, Motion 13 (`motion/react`), Nodemailer (Gmail SMTP), ZeroBounce v2 API, Node 24 (`node --test` with native TypeScript), npm, Vercel.
 
 **Spec:** `docs/superpowers/specs/2026-09-29-portfolio-design.md`
 
 ## Global Constraints
 
-- Colors come only from the palette tokens (`bg-bg`, `bg-surface`, `text-fg`, `text-muted`, `border-border`, `text-accent`, `bg-accent`, `text-on-accent`, `bg-chip-bg`, `text-chip-fg`). No raw hex values in components. The only exception is card shadows (spec §3.1).
+- Colors come only from the palette tokens (`bg-bg`, `bg-surface`, `text-fg`, `text-muted`, `border-border`, `text-accent`, `bg-accent`, `text-on-accent`, `bg-chip-bg`, `text-chip-fg`, `text-error`, `border-error`, `bg-error/10`, `text-success`, `bg-success/15`). No raw hex values in components. The only exception is card shadows (spec §3.1).
+- Files in `lib/` and `tests/` import each other with **relative paths ending in `.ts`** (e.g. `./contact.ts`) and use `import type` for type-only imports, because Node runs them directly. Components and routes may use the `@/` alias.
+- Secrets (`GMAIL_USER`, `GMAIL_APP_PASSWORD`, `ZEROBOUNCE_API_KEY`) live only in `.env.local` and Vercel. They are never committed, logged or sent to the browser.
+- Unit tests must never touch the network or use ZeroBounce credits. Use fakes.
 - Every text/background pair must be ≥ 4.5:1 contrast (WCAG AA), in light and dark.
 - Fonts: Geist (sans) + Geist Mono via `next/font/google`.
 - Content max width 1100px, side padding 20px mobile / 32px ≥ 640px (the `wrap` utility).
 - Animations are 0.2–0.5s with the shared easing `[0.22, 1, 0.36, 1]` and respect `prefers-reduced-motion`.
 - External links use `target="_blank" rel="noopener noreferrer"`.
 - Exactly one `<h1>` (the name). Sections use `<section id aria-labelledby>`.
-- No backend, API routes, runtime fetches, theme toggle, contact form, or test framework.
+- The only server code is `app/api/contact/route.ts`. No database, rate limiting, CAPTCHA, theme toggle, or test framework dependency.
 - No horizontal page scroll at any width ≥ 320px.
 - Commit messages end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
 ## Review Focus
 
-1. **Long text on a 320px phone** (long name, long email, long project name). It should wrap, with no horizontal scroll. The owner is Task 8, Step 3 (temporary long-content test).
-2. **A project with no `image` and/or no `demo`.** It should show the initials placeholder and no "Live demo" link. The placeholder data in Task 2 deliberately includes both cases, and Task 5, Step 7 checks them.
-3. **A typo in a screenshot or resume path.** `npm run check` should fail with a clear message instead of deploying a broken image or a 404 resume. The owner is Task 2 (`check-content.mjs`).
-4. **Nav link or direct URL `/#projects` under the sticky header.** The section heading should be fully visible and not hidden under the nav, and its content should fade in. The owner is Task 8, Step 4.
-5. **OS "Reduce motion" turned on.** There should be no slide, lift or zoom, all content should still be visible, and the jump to sections should be instant. The owner is Task 8, Step 5.
+1. **Double-clicking Send, or pressing Enter twice.** Exactly one email should arrive. The owner is Task 10, Step 5 (the button is disabled while sending; verify with the network tab).
+2. **The send fails after the visitor typed a long message.** Their text should still be in the form, with a mailto fallback shown. The owner is Task 10, Step 5 (stop the server mid-send, or use a wrong App Password).
+3. **Long text on a 320px phone** (long name, long email, long project name). It should wrap, with no horizontal scroll. The owner is Task 11, Step 3 (temporary long-content test).
+4. **Nav link or direct URL `/#projects` under the sticky header.** The section heading should be fully visible and not hidden under the nav, and its content should fade in. The owner is Task 11, Step 4.
+5. **OS "Reduce motion" turned on.** There should be no slide, lift or zoom, all content should still be visible, and the jump to sections should be instant. The owner is Task 11, Step 5.
+
+(A project with no image or demo is covered by the placeholder data in Task 2 and checked in Task 5. File-path typos are caught by `check-content.mjs` in Task 2. ZeroBounce outages are covered by the unit tests in Task 8.)
 
 ---
 
@@ -59,7 +64,15 @@
 | `components/ProjectCard.tsx` | One wide-row project | 5 |
 | `components/Projects.tsx` | Projects section | 5 |
 | `components/Skills.tsx` | Skills section | 6 |
-| `components/Contact.tsx` | Contact section | 7 |
+| `tsconfig.json` | + `allowImportingTsExtensions` | 1 |
+| `lib/contact.ts` | Contact validation + subject formatting (browser + server) | 7 |
+| `lib/verifyEmail.ts` | ZeroBounce call → allow/reject (fails open) | 8 |
+| `lib/contactHandler.ts` | Request logic with injected `verify`/`send` | 9 |
+| `app/api/contact/route.ts` | `POST /api/contact`: real Gmail + ZeroBounce wiring | 9 |
+| `.env.example` | Documents env vars (fake values) | 9 |
+| `tests/*.test.ts` | Unit tests for `lib/` | 7, 8, 9 |
+| `components/ContactForm.tsx` | Form UI + 5 states | 10 |
+| `components/Contact.tsx` | Contact section (side by side) | 10 |
 
 ---
 
@@ -67,11 +80,11 @@
 
 **Files:**
 - Create: everything `create-next-app` generates, at the repo root
-- Modify: `.gitignore` (merge), `app/page.tsx` (replace boilerplate)
+- Modify: `.gitignore` (merge), `app/page.tsx` (replace boilerplate), `tsconfig.json`, `package.json`
 - Delete: `public/file.svg`, `public/globe.svg`, `public/next.svg`, `public/vercel.svg`, `public/window.svg`
 
 **Interfaces:**
-- Produces: a building Next.js app. `npm run dev`, `npm run build` and `npm run lint` work. The `@/*` import alias maps to the repo root.
+- Produces: a building Next.js app. `npm run dev`, `npm run build`, `npm run lint` and `npm test` work. The `@/*` import alias maps to the repo root. `.ts` extensions are allowed in imports. `nodemailer` is installed.
 
 The repo root already contains `docs/`, `.gitignore` and `.superpowers/`. `create-next-app` refuses a non-empty folder, so we scaffold into a subfolder and move the files up.
 
@@ -87,21 +100,31 @@ Expected: `Success! Created _scaffold`. Because we're already inside a git repo,
 
 ```bash
 cat .gitignore >> _scaffold/.gitignore
+printf '!.env.example\n' >> _scaffold/.gitignore
 rm .gitignore
 shopt -s dotglob
 mv _scaffold/* .
 rmdir _scaffold
-tail -n 3 .gitignore
+grep -n "env\|superpowers" .gitignore
 ```
-Expected: the last lines of `.gitignore` include `.superpowers/`.
+Expected: an `.env*` ignore line (from the scaffold), then `.superpowers/`, then `!.env.example`. The last line un-ignores the example file, so it can be committed while real `.env.local` secrets stay ignored.
 
-- [ ] **Step 3: Install dependencies (including Motion)**
+- [ ] **Step 3: Install dependencies (Motion, Nodemailer)**
 
 ```bash
 npm install
-npm install motion
+npm install motion nodemailer
+npm install -D @types/nodemailer
+npm pkg set scripts.test="node --test \"tests/*.test.ts\""
 ```
-Expected: no errors. `package.json` lists `next`, `react`, `motion`, `tailwindcss`.
+Expected: no errors. `package.json` lists `next`, `react`, `motion`, `nodemailer`, `tailwindcss`, and a `test` script.
+
+- [ ] **Step 3b: Allow `.ts` extensions in imports**
+
+`lib/` files are run directly by Node in tests, and Node needs explicit `.ts` extensions. In `tsconfig.json`, add this line inside `"compilerOptions"` (next to `"noEmit": true`):
+```json
+"allowImportingTsExtensions": true,
+```
 
 - [ ] **Step 4: Remove boilerplate assets and replace the starter page**
 
@@ -124,12 +147,14 @@ Expected: `✓ Compiled successfully`, and the route `/` is listed as static (�
 Run: `npm run lint`
 Expected: no errors.
 
+(`npm test` has no test files yet. The first ones arrive in Task 7.)
+
 - [ ] **Step 6: Commit**
 
 ```bash
 git add -A
 git status --short | grep -c superpowers   # expected: 0 (mockups stay ignored)
-git commit -m "chore: scaffold Next.js app with Tailwind and Motion
+git commit -m "chore: scaffold Next.js app with Tailwind, Motion, and Nodemailer
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
@@ -255,7 +280,7 @@ export const profile: Profile = {
   github: "https://github.com/your-username",
   linkedin: "https://www.linkedin.com/in/your-username",
   resume: "/resume.pdf",
-  contactLine: "I'm open to software engineering and AI internships. The fastest way to reach me is email.",
+  contactLine: "I'm open to software engineering and AI internships. Send me a message, or reach me directly:",
 };
 
 export const projects: Project[] = [
@@ -361,7 +386,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 **Interfaces:**
 - Consumes: `profile` from `@/data/content` (Task 2)
 - Produces:
-  - Tailwind color classes: `bg-bg`, `bg-surface`, `text-fg`, `text-muted`, `border-border`, `text-accent`, `bg-accent`, `decoration-accent`, `text-on-accent`, `bg-chip-bg`, `text-chip-fg`. Opacity modifiers work (e.g. `bg-bg/80`).
+  - Tailwind color classes: `bg-bg`, `bg-surface`, `text-fg`, `text-muted`, `border-border`, `text-accent`, `bg-accent`, `decoration-accent`, `text-on-accent`, `bg-chip-bg`, `text-chip-fg`, `text-error`, `border-error`, `text-success`. Opacity modifiers work (e.g. `bg-bg/80`, `bg-error/10`).
   - Font classes `font-sans` (Geist), `font-mono` (Geist Mono).
   - Utilities: `wrap` (centered 1100px container + side padding), `section-pad` (section vertical padding).
   - CSS var `--glow` (used inline by Hero).
@@ -425,6 +450,8 @@ const pairs = [
   ["accent", "surface"],
   ["on-accent", "accent"],
   ["chip-fg", "chip-bg", "surface"],
+  ["error", "surface"],
+  ["success", "surface"],
 ];
 
 let failed = false;
@@ -478,6 +505,8 @@ Replace `app/globals.css` entirely with (the light `:root` block must come **bef
   --chip-bg: #e6dacd;
   --chip-fg: #6a4730;
   --glow: rgba(190, 150, 110, 0.45);
+  --error: #b3261e;
+  --success: #3f6b3a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -492,6 +521,8 @@ Replace `app/globals.css` entirely with (the light `:root` block must come **bef
     --chip-bg: rgba(201, 160, 122, 0.14);
     --chip-fg: #dcc0a4;
     --glow: rgba(201, 160, 122, 0.24);
+    --error: #f2a39c;
+    --success: #a8d5a0;
   }
 }
 
@@ -505,6 +536,8 @@ Replace `app/globals.css` entirely with (the light `:root` block must come **bef
   --color-on-accent: var(--on-accent);
   --color-chip-bg: var(--chip-bg);
   --color-chip-fg: var(--chip-fg);
+  --color-error: var(--error);
+  --color-success: var(--success);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -561,7 +594,7 @@ section[id] {
 - [ ] **Step 4: Run the contrast check to verify it passes**
 
 Run: `npm run check:contrast`
-Expected: 16 `✓` lines (lowest is `light muted on bg` at about 4.78:1), then `✓ All palette pairs pass WCAG AA`.
+Expected: 20 `✓` lines (lowest is `light muted on bg` at about 4.78:1), then `✓ All palette pairs pass WCAG AA`.
 
 - [ ] **Step 5: Add the shared easing and the Motion provider**
 
@@ -659,7 +692,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Consumes: `profile` (Task 2); `EASE`, the `wrap` utility, palette classes and `--glow` (Task 3)
 - Produces:
   - `FadeIn` with props `{ children: React.ReactNode; delay?: number; y?: number; className?: string }` (default `delay = 0`, `y = 24`). It animates once, when it enters the viewport.
-  - Anchor targets used by the nav: `#top` (Hero). `#projects`, `#skills` and `#contact` are added by Tasks 5–7.
+  - Anchor targets used by the nav: `#top` (Hero). `#projects`, `#skills` and `#contact` are added by Tasks 5, 6 and 10.
 
 - [ ] **Step 1: Create the reusable reveal animation**
 
@@ -866,7 +899,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: `Project`, `projects` (Task 2); `FadeIn` (Task 4); `wrap`, `section-pad` and palette classes (Task 3)
-- Produces (reused by Tasks 6–7):
+- Produces (reused by Tasks 6 and 10):
   - `SectionHeading` with props `{ id: string; label: string; title: string }`. Renders the mono label and an `<h2 id={id}>`.
   - `Chip` with props `{ children: React.ReactNode }`. Renders an `<li>` and must be placed inside a `<ul>`.
   - `ArrowLink` with props `{ href: string; children: React.ReactNode; external?: boolean; className?: string }` (default `external = true`, which adds new-tab attributes).
@@ -1163,21 +1196,853 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ---
 
-### Task 7: Contact section
+### Task 7: Contact validation (`lib/contact.ts`)
 
 **Files:**
-- Create: `components/Contact.tsx`
+- Create: `tests/contact.test.ts`, `lib/contact.ts`
+
+**Interfaces:**
+- Produces (used by Tasks 9 and 10):
+```ts
+export type ContactInput = { name: string; email: string; message: string };
+export type ContactErrors = Partial<Record<keyof ContactInput, string>>;
+export const LIMITS: { readonly name: 100; readonly messageMin: 10; readonly messageMax: 2000 };
+export function normalizeContact(raw: unknown): ContactInput; // trims strings; non-strings become ""
+export function validateContact(input: ContactInput): ContactErrors; // {} when valid
+export function subjectFor(name: string): string; // "Portfolio message from {name}", CR/LF → space
+```
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/contact.test.ts`:
+```ts
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { normalizeContact, subjectFor, validateContact } from "../lib/contact.ts";
+
+const good = {
+  name: "Jane Smith",
+  email: "jane@company.com",
+  message: "Hi! I'd love to chat about an internship.",
+};
+
+test("a complete, well-formed message has no errors", () => {
+  assert.deepEqual(validateContact(good), {});
+});
+
+test("normalizeContact trims strings and blanks out anything else", () => {
+  assert.deepEqual(normalizeContact({ name: "  Jane ", email: 42, message: null }), {
+    name: "Jane",
+    email: "",
+    message: "",
+  });
+  assert.deepEqual(normalizeContact(null), { name: "", email: "", message: "" });
+  assert.deepEqual(normalizeContact("not an object"), { name: "", email: "", message: "" });
+});
+
+test("name is required and at most 100 characters", () => {
+  assert.equal(validateContact({ ...good, name: "" }).name, "Please enter your name.");
+  assert.equal(validateContact({ ...good, name: "a".repeat(101) }).name, "Name must be 100 characters or fewer.");
+  assert.equal(validateContact({ ...good, name: "a".repeat(100) }).name, undefined);
+});
+
+test("malformed emails are rejected", () => {
+  const bad = ["", "jane", "jane@company", "jane.company.com", "jane @company.com", "jane@company.c", `${"a".repeat(250)}@x.com`];
+  for (const email of bad) {
+    assert.equal(validateContact({ ...good, email }).email, "Please enter a valid email address.", email);
+  }
+});
+
+test("common real-world email shapes are accepted", () => {
+  for (const email of ["jane@company.com", "jane.smith+jobs@mail.company.co.uk"]) {
+    assert.equal(validateContact({ ...good, email }).email, undefined, email);
+  }
+});
+
+test("message must be 10–2000 characters", () => {
+  assert.equal(validateContact({ ...good, message: "Too short" }).message, "Message should be at least 10 characters.");
+  assert.equal(validateContact({ ...good, message: "a".repeat(10) }).message, undefined);
+  assert.equal(validateContact({ ...good, message: "a".repeat(2000) }).message, undefined);
+  assert.equal(validateContact({ ...good, message: "a".repeat(2001) }).message, "Message must be 2000 characters or fewer.");
+});
+
+test("subjectFor strips line breaks so a name can't inject email headers", () => {
+  assert.equal(subjectFor("Jane Smith"), "Portfolio message from Jane Smith");
+  assert.equal(subjectFor("Jane\r\nBcc: x@evil.com"), "Portfolio message from Jane Bcc: x@evil.com");
+});
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `npm test`
+Expected: FAIL with `Cannot find module '.../lib/contact.ts'`.
+
+- [ ] **Step 3: Implement**
+
+Create `lib/contact.ts`:
+```ts
+// Contact form rules, shared by the browser (instant feedback) and the server (the real gate).
+
+export type ContactInput = { name: string; email: string; message: string };
+export type ContactErrors = Partial<Record<keyof ContactInput, string>>;
+
+export const LIMITS = { name: 100, messageMin: 10, messageMax: 2000 } as const;
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const EMAIL_MAX = 254;
+
+export function normalizeContact(raw: unknown): ContactInput {
+  const fields = (typeof raw === "object" && raw !== null ? raw : {}) as Record<string, unknown>;
+  const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+  return { name: text(fields.name), email: text(fields.email), message: text(fields.message) };
+}
+
+export function validateContact({ name, email, message }: ContactInput): ContactErrors {
+  const errors: ContactErrors = {};
+
+  if (!name) errors.name = "Please enter your name.";
+  else if (name.length > LIMITS.name) errors.name = `Name must be ${LIMITS.name} characters or fewer.`;
+
+  if (email.length > EMAIL_MAX || !EMAIL_PATTERN.test(email)) errors.email = "Please enter a valid email address.";
+
+  if (message.length < LIMITS.messageMin) {
+    errors.message = `Message should be at least ${LIMITS.messageMin} characters.`;
+  } else if (message.length > LIMITS.messageMax) {
+    errors.message = `Message must be ${LIMITS.messageMax} characters or fewer.`;
+  }
+
+  return errors;
+}
+
+export function subjectFor(name: string): string {
+  return `Portfolio message from ${name.replace(/[\r\n]+/g, " ")}`;
+}
+```
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+Run: `npm test`
+Expected: `ℹ pass 7`, `ℹ fail 0`.
+
+- [ ] **Step 5: Verify the build and commit**
+
+Run: `npm run build && npm run lint`. Expected: pass.
+```bash
+git add lib/contact.ts tests/contact.test.ts
+git commit -m "feat: add contact form validation with tests
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 8: Email verification (`lib/verifyEmail.ts`)
+
+**Files:**
+- Create: `tests/verifyEmail.test.ts`, `lib/verifyEmail.ts`
+
+**Interfaces:**
+- Produces (used by Task 9):
+```ts
+export type VerifyResult = { ok: true } | { ok: false; message: string; suggestion?: string };
+export function verifyEmail(
+  email: string,
+  options: { apiKey: string | undefined; fetchImpl?: typeof fetch; timeoutMs?: number },
+): Promise<VerifyResult>; // never throws; fails open
+```
+
+ZeroBounce reference: `GET https://api.zerobounce.net/v2/validate?api_key=…&email=…&timeout=5` returns JSON with `status` (`valid | invalid | catch-all | unknown | spamtrap | abuse | do_not_mail`), `sub_status`, `did_you_mean` (string or null), and on account problems an `error` string.
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/verifyEmail.test.ts`:
+```ts
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { verifyEmail } from "../lib/verifyEmail.ts";
+
+// verifyEmail logs a warning when it fails open. Keep test output clean.
+console.warn = () => {};
+
+const INVALID = "This email address doesn't seem to exist.";
+const DISPOSABLE = "Please use a permanent email address.";
+
+// A fake fetch that returns `body` as JSON and records the URLs it was called with.
+function fakeFetch(body: unknown, status = 200) {
+  const calls: string[] = [];
+  const impl = (async (url: string | URL | Request) => {
+    calls.push(String(url));
+    return new Response(JSON.stringify(body), { status });
+  }) as typeof fetch;
+  return { impl, calls };
+}
+
+const check = (body: unknown, status = 200) =>
+  verifyEmail("jane@company.com", { apiKey: "KEY", fetchImpl: fakeFetch(body, status).impl });
+
+test("calls ZeroBounce with the key, the email, and a 5s server timeout", async () => {
+  const { impl, calls } = fakeFetch({ status: "valid" });
+  await verifyEmail("jane@company.com", { apiKey: "KEY", fetchImpl: impl });
+  assert.equal(calls.length, 1);
+  const url = new URL(calls[0]);
+  assert.equal(url.origin + url.pathname, "https://api.zerobounce.net/v2/validate");
+  assert.equal(url.searchParams.get("api_key"), "KEY");
+  assert.equal(url.searchParams.get("email"), "jane@company.com");
+  assert.equal(url.searchParams.get("timeout"), "5");
+});
+
+test("valid → allowed", async () => {
+  assert.deepEqual(await check({ status: "valid", sub_status: "" }), { ok: true });
+});
+
+test("invalid → rejected, with ZeroBounce's typo suggestion when it has one", async () => {
+  assert.deepEqual(await check({ status: "invalid", sub_status: "mailbox_not_found", did_you_mean: "jane@gmail.com" }), {
+    ok: false,
+    message: INVALID,
+    suggestion: "jane@gmail.com",
+  });
+  assert.deepEqual(await check({ status: "invalid", sub_status: "mailbox_not_found", did_you_mean: null }), {
+    ok: false,
+    message: INVALID,
+  });
+});
+
+test("spamtrap → rejected", async () => {
+  assert.deepEqual(await check({ status: "spamtrap", did_you_mean: null }), { ok: false, message: INVALID });
+});
+
+test("disposable address → rejected with its own message", async () => {
+  assert.deepEqual(await check({ status: "do_not_mail", sub_status: "disposable" }), { ok: false, message: DISPOSABLE });
+});
+
+test("uncertain results are allowed so real recruiters are never blocked", async () => {
+  for (const body of [
+    { status: "catch-all" },
+    { status: "unknown" },
+    { status: "abuse" },
+    { status: "do_not_mail", sub_status: "role_based" },
+  ]) {
+    assert.deepEqual(await check(body), { ok: true }, JSON.stringify(body));
+  }
+});
+
+test("fails open: API error field (e.g. out of credits)", async () => {
+  assert.deepEqual(await check({ error: "Invalid API Key or your account ran out of credits" }), { ok: true });
+});
+
+test("fails open: HTTP error", async () => {
+  assert.deepEqual(await check({ message: "oops" }, 500), { ok: true });
+});
+
+test("fails open: network error", async () => {
+  const failing = (async () => {
+    throw new Error("network down");
+  }) as typeof fetch;
+  assert.deepEqual(await verifyEmail("jane@company.com", { apiKey: "KEY", fetchImpl: failing }), { ok: true });
+});
+
+test("fails open: ZeroBounce too slow", async () => {
+  // Never resolves on its own. It only rejects when verifyEmail aborts it.
+  const hanging = ((_url: string | URL | Request, init?: RequestInit) =>
+    new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(init?.signal?.reason));
+    })) as typeof fetch;
+  assert.deepEqual(await verifyEmail("jane@company.com", { apiKey: "KEY", fetchImpl: hanging, timeoutMs: 50 }), {
+    ok: true,
+  });
+});
+
+test("no API key → skips the call entirely and allows", async () => {
+  const { impl, calls } = fakeFetch({ status: "invalid" });
+  assert.deepEqual(await verifyEmail("jane@company.com", { apiKey: undefined, fetchImpl: impl }), { ok: true });
+  assert.equal(calls.length, 0);
+});
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `npm test`
+Expected: the contact tests pass. `verifyEmail.test.ts` fails with `Cannot find module '.../lib/verifyEmail.ts'`.
+
+- [ ] **Step 3: Implement**
+
+Create `lib/verifyEmail.ts`:
+```ts
+// Asks ZeroBounce whether an email address really exists.
+// Fails open: if ZeroBounce is unavailable, we allow the message rather than lose a real one.
+
+export type VerifyResult = { ok: true } | { ok: false; message: string; suggestion?: string };
+
+type Options = {
+  apiKey: string | undefined;
+  fetchImpl?: typeof fetch;
+  timeoutMs?: number;
+};
+
+type ZeroBounceResponse = {
+  status?: string;
+  sub_status?: string;
+  did_you_mean?: string | null;
+  error?: string;
+};
+
+const ENDPOINT = "https://api.zerobounce.net/v2/validate";
+const INVALID = "This email address doesn't seem to exist.";
+const DISPOSABLE = "Please use a permanent email address.";
+
+export async function verifyEmail(
+  email: string,
+  { apiKey, fetchImpl = fetch, timeoutMs = 8000 }: Options,
+): Promise<VerifyResult> {
+  if (!apiKey) {
+    console.warn("[contact] ZEROBOUNCE_API_KEY is not set; skipping email verification.");
+    return { ok: true };
+  }
+
+  const url = new URL(ENDPOINT);
+  url.searchParams.set("api_key", apiKey);
+  url.searchParams.set("email", email);
+  url.searchParams.set("timeout", "5");
+
+  try {
+    const res = await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs) });
+    if (!res.ok) throw new Error(`ZeroBounce HTTP ${res.status}`);
+    const data = (await res.json()) as ZeroBounceResponse;
+    if (data.error) throw new Error(`ZeroBounce: ${data.error}`);
+
+    if (data.status === "invalid" || data.status === "spamtrap") {
+      return data.did_you_mean
+        ? { ok: false, message: INVALID, suggestion: data.did_you_mean }
+        : { ok: false, message: INVALID };
+    }
+    if (data.status === "do_not_mail" && data.sub_status === "disposable") {
+      return { ok: false, message: DISPOSABLE };
+    }
+    return { ok: true };
+  } catch (err) {
+    // Log the reason only. The API key is in the URL, so never log the URL.
+    console.warn("[contact] Email verification unavailable; allowing message:", (err as Error).message);
+    return { ok: true };
+  }
+}
+```
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+Run: `npm test`
+Expected: `ℹ pass 18`, `ℹ fail 0`.
+
+- [ ] **Step 5: Verify the build and commit**
+
+Run: `npm run build && npm run lint`. Expected: pass.
+```bash
+git add lib/verifyEmail.ts tests/verifyEmail.test.ts
+git commit -m "feat: add ZeroBounce email verification (fails open) with tests
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 9: `POST /api/contact` (handler + route)
+
+**Files:**
+- Create: `tests/contactHandler.test.ts`, `lib/contactHandler.ts`, `app/api/contact/route.ts`, `.env.example`
+
+**Interfaces:**
+- Consumes: `normalizeContact`, `validateContact`, `subjectFor`, `ContactErrors`, `ContactInput` (Task 7); `verifyEmail`, `VerifyResult` (Task 8)
+- Produces:
+```ts
+export type Mail = { subject: string; text: string; replyTo: string };
+export type ContactDeps = {
+  verify: (email: string) => Promise<VerifyResult>;
+  send: (mail: Mail) => Promise<void>;
+};
+export type ContactResponseBody =
+  | { ok: true }
+  | { ok: false; errors: ContactErrors; suggestion?: string }
+  | { ok: false; error: string };
+export function handleContact(raw: unknown, deps: ContactDeps): Promise<{ status: 200 | 400 | 500; body: ContactResponseBody }>;
+```
+- HTTP: `POST /api/contact` with JSON `{ name, email, message, website }` → the status and body above (spec §6a). Task 10's form relies on `res.ok`, `body.errors` and `body.suggestion`.
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/contactHandler.test.ts`:
+```ts
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { handleContact } from "../lib/contactHandler.ts";
+import type { ContactDeps, Mail } from "../lib/contactHandler.ts";
+
+// handleContact logs send failures. Keep test output clean.
+console.error = () => {};
+
+const good = {
+  name: "Jane Smith",
+  email: "jane@company.com",
+  message: "Hi! I'd love to chat about an internship.",
+  website: "",
+};
+
+// Fake dependencies that record what they were asked to do.
+function fakes(overrides: Partial<ContactDeps> = {}) {
+  const verified: string[] = [];
+  const sent: Mail[] = [];
+  const deps: ContactDeps = {
+    verify: async (email) => {
+      verified.push(email);
+      return { ok: true };
+    },
+    send: async (mail) => {
+      sent.push(mail);
+    },
+    ...overrides,
+  };
+  return { deps, verified, sent };
+}
+
+test("sends a plain-text email with Reply-To set to the visitor", async () => {
+  const { deps, sent } = fakes();
+  const res = await handleContact({ ...good, name: "  Jane Smith  " }, deps);
+  assert.deepEqual(res, { status: 200, body: { ok: true } });
+  assert.deepEqual(sent, [
+    {
+      subject: "Portfolio message from Jane Smith",
+      replyTo: "jane@company.com",
+      text: "Name: Jane Smith\nEmail: jane@company.com\n\nHi! I'd love to chat about an internship.\n",
+    },
+  ]);
+});
+
+test("honeypot filled → pretends success, verifies and sends nothing", async () => {
+  const { deps, verified, sent } = fakes();
+  const res = await handleContact({ ...good, website: "http://spam.example" }, deps);
+  assert.deepEqual(res, { status: 200, body: { ok: true } });
+  assert.equal(verified.length, 0);
+  assert.equal(sent.length, 0);
+});
+
+test("invalid fields → 400 with field errors, without spending a verification credit", async () => {
+  const { deps, verified, sent } = fakes();
+  const res = await handleContact({ ...good, email: "jane@company", message: "Hi" }, deps);
+  assert.equal(res.status, 400);
+  assert.deepEqual(res.body, {
+    ok: false,
+    errors: { email: "Please enter a valid email address.", message: "Message should be at least 10 characters." },
+  });
+  assert.equal(verified.length, 0);
+  assert.equal(sent.length, 0);
+});
+
+test("missing or non-JSON body → 400 with every field error", async () => {
+  const { deps } = fakes();
+  const res = await handleContact(null, deps);
+  assert.equal(res.status, 400);
+  assert.deepEqual(Object.keys((res.body as { errors: object }).errors).sort(), ["email", "message", "name"]);
+});
+
+test("email rejected by verification → 400 on the email field, with suggestion, nothing sent", async () => {
+  const { deps, sent } = fakes({
+    verify: async () => ({ ok: false, message: "This email address doesn't seem to exist.", suggestion: "jane@gmail.com" }),
+  });
+  const res = await handleContact({ ...good, email: "jane@gmial.com" }, deps);
+  assert.deepEqual(res, {
+    status: 400,
+    body: { ok: false, errors: { email: "This email address doesn't seem to exist." }, suggestion: "jane@gmail.com" },
+  });
+  assert.equal(sent.length, 0);
+});
+
+test("rejection without a suggestion has no suggestion key", async () => {
+  const { deps } = fakes({ verify: async () => ({ ok: false, message: "Please use a permanent email address." }) });
+  const res = await handleContact(good, deps);
+  assert.deepEqual(res.body, { ok: false, errors: { email: "Please use a permanent email address." } });
+});
+
+test("send failure → 500 with a generic message (no internal details leaked)", async () => {
+  const { deps } = fakes({
+    send: async () => {
+      throw new Error("Invalid login: 535 Username and Password not accepted");
+    },
+  });
+  const res = await handleContact(good, deps);
+  assert.deepEqual(res, { status: 500, body: { ok: false, error: "Couldn't send your message." } });
+});
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `npm test`
+Expected: the earlier tests pass. `contactHandler.test.ts` fails with `Cannot find module '.../lib/contactHandler.ts'`.
+
+- [ ] **Step 3: Implement the handler**
+
+Create `lib/contactHandler.ts`:
+```ts
+// The logic behind POST /api/contact. Verification and sending are passed in,
+// so tests can use fakes and the route can use the real Gmail and ZeroBounce.
+import { normalizeContact, subjectFor, validateContact } from "./contact.ts";
+import type { ContactErrors, ContactInput } from "./contact.ts";
+import type { VerifyResult } from "./verifyEmail.ts";
+
+export type Mail = { subject: string; text: string; replyTo: string };
+
+export type ContactDeps = {
+  verify: (email: string) => Promise<VerifyResult>;
+  send: (mail: Mail) => Promise<void>;
+};
+
+export type ContactResponseBody =
+  | { ok: true }
+  | { ok: false; errors: ContactErrors; suggestion?: string }
+  | { ok: false; error: string };
+
+type ContactResponse = { status: 200 | 400 | 500; body: ContactResponseBody };
+
+export async function handleContact(raw: unknown, deps: ContactDeps): Promise<ContactResponse> {
+  // Bots fill in every field, including the hidden "website" one. Pretend it worked.
+  const website = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>).website : undefined;
+  if (typeof website === "string" && website.trim() !== "") {
+    return { status: 200, body: { ok: true } };
+  }
+
+  const input = normalizeContact(raw);
+  const errors = validateContact(input);
+  if (Object.keys(errors).length > 0) {
+    return { status: 400, body: { ok: false, errors } };
+  }
+
+  const verdict = await deps.verify(input.email);
+  if (!verdict.ok) {
+    const body: ContactResponseBody = verdict.suggestion
+      ? { ok: false, errors: { email: verdict.message }, suggestion: verdict.suggestion }
+      : { ok: false, errors: { email: verdict.message } };
+    return { status: 400, body };
+  }
+
+  try {
+    await deps.send({ subject: subjectFor(input.name), text: formatBody(input), replyTo: input.email });
+    return { status: 200, body: { ok: true } };
+  } catch (err) {
+    console.error("[contact] Failed to send email:", (err as Error).message);
+    return { status: 500, body: { ok: false, error: "Couldn't send your message." } };
+  }
+}
+
+function formatBody({ name, email, message }: ContactInput): string {
+  return `Name: ${name}\nEmail: ${email}\n\n${message}\n`;
+}
+```
+
+- [ ] **Step 4: Run the tests to verify they pass**
+
+Run: `npm test`
+Expected: `ℹ pass 25`, `ℹ fail 0`.
+
+- [ ] **Step 5: Create the route (real wiring)**
+
+Create `app/api/contact/route.ts`:
+```ts
+import nodemailer from "nodemailer";
+import { handleContact } from "@/lib/contactHandler";
+import type { Mail } from "@/lib/contactHandler";
+import { verifyEmail } from "@/lib/verifyEmail";
+
+// Nodemailer needs the full Node.js runtime (not Edge).
+export const runtime = "nodejs";
+
+export async function POST(request: Request) {
+  const raw: unknown = await request.json().catch(() => null);
+  const { status, body } = await handleContact(raw, {
+    verify: (email) => verifyEmail(email, { apiKey: process.env.ZEROBOUNCE_API_KEY }),
+    send: sendWithGmail,
+  });
+  return Response.json(body, { status });
+}
+
+async function sendWithGmail(mail: Mail): Promise<void> {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) throw new Error("GMAIL_USER / GMAIL_APP_PASSWORD are not set");
+
+  const transporter = nodemailer.createTransport({ service: "gmail", auth: { user, pass } });
+  await transporter.sendMail({
+    from: `Portfolio <${user}>`,
+    to: user,
+    replyTo: mail.replyTo,
+    subject: mail.subject,
+    text: mail.text,
+  });
+}
+```
+
+Create `.env.example`:
+```bash
+# Copy this file to .env.local (never commit .env.local) and fill in real values.
+# Also add the same variables in Vercel → Project → Settings → Environment Variables.
+
+# The Gmail address that sends AND receives contact messages.
+GMAIL_USER=you@gmail.com
+
+# A Google App Password (not your normal password). Needs 2-Step Verification on.
+# Create one at https://myaccount.google.com/apppasswords
+GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
+
+# Optional. Free key from https://www.zerobounce.net (100 checks/month).
+# If empty, email verification is skipped and messages still go through.
+ZEROBOUNCE_API_KEY=
+```
+
+- [ ] **Step 6: Verify the endpoint over HTTP (no credentials yet)**
+
+Run `npm run build && npm run lint`. Expected: pass, and `/api/contact` is listed as a dynamic route (ƒ).
+
+Start `npm run dev`, then in a second terminal:
+```bash
+# 1. Invalid input → 400 with field errors
+curl -s -w "  [%{http_code}]\n" -X POST localhost:3000/api/contact -H "Content-Type: application/json" \
+  -d '{"name":"","email":"nope","message":"hi"}'
+# 2. Not JSON → 400
+curl -s -w "  [%{http_code}]\n" -X POST localhost:3000/api/contact -d 'hello'
+# 3. Honeypot → 200 and nothing sent
+curl -s -w "  [%{http_code}]\n" -X POST localhost:3000/api/contact -H "Content-Type: application/json" \
+  -d '{"name":"Bot","email":"bot@example.com","message":"Buy cheap stuff now","website":"x"}'
+# 4. Valid, but no Gmail credentials configured yet → 500
+curl -s -w "  [%{http_code}]\n" -X POST localhost:3000/api/contact -H "Content-Type: application/json" \
+  -d '{"name":"Jane","email":"jane@company.com","message":"Hello from curl test"}'
+```
+Expected:
+1. `{"ok":false,"errors":{"name":"Please enter your name.","email":"Please enter a valid email address.","message":"Message should be at least 10 characters."}}  [400]`
+2. A `400` with all three field errors.
+3. `{"ok":true}  [200]`
+4. `{"ok":false,"error":"Couldn't send your message."}  [500]`. The dev-server log shows the ZeroBounce "not set" warning and `GMAIL_USER / GMAIL_APP_PASSWORD are not set`.
+
+Stop the dev server.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add lib/contactHandler.ts tests/contactHandler.test.ts app/api/contact/route.ts .env.example
+git status --short | grep -c "env.local"   # expected: 0
+git commit -m "feat: add POST /api/contact with Gmail sending and tests
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 10: Contact section with the form
+
+**Files:**
+- Create: `components/ContactForm.tsx`, `components/Contact.tsx`
 - Modify: `app/page.tsx`
 
 **Interfaces:**
-- Consumes: `profile` (Task 2); `FadeIn` (Task 4); `ArrowLink` (Task 5)
-- Produces: section anchor `#contact`
+- Consumes: `profile` (Task 2); `FadeIn` (Task 4); `ArrowLink` (Task 5); `validateContact`, `normalizeContact`, `ContactErrors`, `LIMITS` (Task 7); the `POST /api/contact` contract (Task 9)
+- Produces: `ContactForm` with props `{ fallbackEmail: string }`, and the section anchor `#contact`
 
-- [ ] **Step 1: Create the Contact section**
+- [ ] **Step 1: Create the form**
 
-Create `components/Contact.tsx`. It uses the same label and heading styles as `SectionHeading`, but centered, so the markup is inline:
+Create `components/ContactForm.tsx`:
+```tsx
+"use client";
+
+import { useState } from "react";
+import { LIMITS, normalizeContact, validateContact, type ContactErrors } from "@/lib/contact";
+
+type Status = "idle" | "sending" | "success" | "failure";
+type Field = "name" | "email" | "message";
+
+const EMPTY = { name: "", email: "", message: "" };
+
+const inputBase =
+  "mt-1.5 w-full rounded-lg border bg-bg px-3 py-2.5 text-base text-fg placeholder:text-muted transition-colors duration-200 focus:outline-2 focus:outline-offset-1 focus:outline-accent";
+
+export default function ContactForm({ fallbackEmail }: { fallbackEmail: string }) {
+  const [values, setValues] = useState(EMPTY);
+  const [website, setWebsite] = useState(""); // honeypot: humans never see or fill this
+  const [errors, setErrors] = useState<ContactErrors>({});
+  const [suggestion, setSuggestion] = useState<string>();
+  const [status, setStatus] = useState<Status>("idle");
+  const [sentName, setSentName] = useState("");
+
+  function update(field: Field, value: string) {
+    setValues((v) => ({ ...v, [field]: value }));
+    setErrors((e) => ({ ...e, [field]: undefined }));
+    if (field === "email") setSuggestion(undefined);
+  }
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (status === "sending") return;
+
+    const input = normalizeContact(values);
+    const clientErrors = validateContact(input);
+    setSuggestion(undefined);
+    if (Object.keys(clientErrors).length > 0) {
+      setErrors(clientErrors);
+      return;
+    }
+
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...input, website }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setSentName(input.name);
+        setValues(EMPTY);
+        setStatus("success");
+      } else if (res.status === 400 && data.errors) {
+        setErrors(data.errors);
+        setSuggestion(data.suggestion);
+        setStatus("idle");
+      } else {
+        setStatus("failure");
+      }
+    } catch {
+      setStatus("failure");
+    }
+  }
+
+  const fieldProps = (field: Field) => ({
+    id: `contact-${field}`,
+    name: field,
+    value: values[field],
+    "aria-invalid": errors[field] ? true : undefined,
+    "aria-describedby": errors[field] ? `contact-${field}-error` : undefined,
+    className: `${inputBase} ${errors[field] ? "border-error" : "border-border"}`,
+  });
+
+  const errorText = (field: Field) =>
+    errors[field] && (
+      <p id={`contact-${field}-error`} className="mt-1.5 text-sm text-error">
+        {errors[field]}
+      </p>
+    );
+
+  return (
+    <div aria-live="polite">
+      {status === "success" ? (
+        <div className="flex h-full flex-col items-center justify-center py-10 text-center">
+          <div aria-hidden className="flex size-12 items-center justify-center rounded-full bg-success/15 text-2xl text-success">
+            ✓
+          </div>
+          <h3 className="mt-4 text-xl font-bold break-words">Thanks, {sentName}!</h3>
+          <p className="mt-2 text-muted">Your message is on its way. I&apos;ll get back to you soon.</p>
+        </div>
+      ) : (
+        <form noValidate onSubmit={onSubmit} className="relative">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="contact-name" className="text-sm font-medium">
+                Name
+              </label>
+              <input
+                {...fieldProps("name")}
+                type="text"
+                autoComplete="name"
+                maxLength={LIMITS.name}
+                placeholder="Jane Smith"
+                onChange={(e) => update("name", e.target.value)}
+              />
+              {errorText("name")}
+            </div>
+            <div>
+              <label htmlFor="contact-email" className="text-sm font-medium">
+                Email
+              </label>
+              <input
+                {...fieldProps("email")}
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="jane@company.com"
+                onChange={(e) => update("email", e.target.value)}
+              />
+              {errorText("email")}
+              {suggestion && (
+                <button
+                  type="button"
+                  onClick={() => update("email", suggestion)}
+                  className="mt-1 text-sm text-accent underline underline-offset-[3px]"
+                >
+                  Did you mean {suggestion}?
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label htmlFor="contact-message" className="text-sm font-medium">
+              Message
+            </label>
+            <textarea
+              {...fieldProps("message")}
+              rows={5}
+              maxLength={LIMITS.messageMax}
+              placeholder="Hi! I'd love to chat about an internship on our team…"
+              onChange={(e) => update("message", e.target.value)}
+              style={{ resize: "vertical" }}
+            />
+            {errorText("message")}
+          </div>
+
+          {/* Honeypot: off-screen, hidden from assistive tech, skipped by Tab. */}
+          <div aria-hidden="true" className="absolute -left-[9999px] size-px overflow-hidden">
+            <label htmlFor="contact-website">Website</label>
+            <input
+              id="contact-website"
+              name="website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={status === "sending"}
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-on-accent transition-opacity duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {status === "sending" ? (
+              <>
+                <span aria-hidden className="size-3.5 rounded-full border-2 border-current border-r-transparent motion-safe:animate-spin" />
+                Sending…
+              </>
+            ) : (
+              "Send message →"
+            )}
+          </button>
+
+          {status === "failure" && (
+            <p className="mt-4 rounded-lg bg-error/10 px-3 py-2.5 text-sm text-error">
+              Couldn&apos;t send your message. Please email me directly at{" "}
+              <a href={`mailto:${fallbackEmail}`} className="font-semibold break-all underline">
+                {fallbackEmail}
+              </a>
+              .
+            </p>
+          )}
+        </form>
+      )}
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Create the Contact section**
+
+Create `components/Contact.tsx`:
 ```tsx
 import ArrowLink from "@/components/ArrowLink";
+import ContactForm from "@/components/ContactForm";
 import FadeIn from "@/components/FadeIn";
 import { profile } from "@/data/content";
 
@@ -1185,25 +2050,30 @@ export default function Contact() {
   return (
     <section id="contact" aria-labelledby="contact-heading" className="wrap section-pad">
       <FadeIn>
-        <div className="rounded-3xl border border-border bg-surface px-6 py-12 text-center sm:px-12 sm:py-16">
-          <p className="font-mono text-xs tracking-widest text-accent uppercase">Contact</p>
-          <h2 id="contact-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            Let&apos;s talk
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-muted">{profile.contactLine}</p>
-          <ul className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-3">
-            <li>
-              <ArrowLink href={`mailto:${profile.email}`} external={false} className="break-all">
-                {profile.email}
-              </ArrowLink>
-            </li>
-            <li>
-              <ArrowLink href={profile.github}>GitHub</ArrowLink>
-            </li>
-            <li>
-              <ArrowLink href={profile.linkedin}>LinkedIn</ArrowLink>
-            </li>
-          </ul>
+        <div className="grid gap-10 rounded-3xl border border-border bg-surface p-6 sm:p-10 lg:grid-cols-[1fr_1.25fr] lg:gap-12">
+          <div className="min-w-0">
+            <p className="font-mono text-xs tracking-widest text-accent uppercase">Contact</p>
+            <h2 id="contact-heading" className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+              Let&apos;s talk
+            </h2>
+            <p className="mt-4 max-w-md text-muted">{profile.contactLine}</p>
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-3">
+              <li className="min-w-0">
+                <ArrowLink href={`mailto:${profile.email}`} external={false} className="break-all">
+                  {profile.email}
+                </ArrowLink>
+              </li>
+              <li>
+                <ArrowLink href={profile.github}>GitHub</ArrowLink>
+              </li>
+              <li>
+                <ArrowLink href={profile.linkedin}>LinkedIn</ArrowLink>
+              </li>
+            </ul>
+          </div>
+          <div className="min-w-0">
+            <ContactForm fallbackEmail={profile.email} />
+          </div>
         </div>
       </FadeIn>
     </section>
@@ -1211,7 +2081,7 @@ export default function Contact() {
 }
 ```
 
-- [ ] **Step 2: Add Contact to the page**
+- [ ] **Step 3: Add Contact to the page**
 
 Replace `app/page.tsx` entirely with:
 ```tsx
@@ -1238,34 +2108,53 @@ export default function Home() {
 }
 ```
 
-- [ ] **Step 3: Verify**
+- [ ] **Step 4: Automated checks**
 
-Run: `npm run check && npm run build && npm run lint`. Expected: all pass.
+Run: `npm test && npm run check && npm run build && npm run lint`
+Expected: all pass.
 
-Run `npm run dev` and check:
-- A centered card with the "Let's talk" heading, the contact line, and three links: the email address, GitHub and LinkedIn.
-- The email link opens the mail client in the same tab. GitHub and LinkedIn open in new tabs.
-- Clicking **Contact** in the nav scrolls to it. At the bottom of the page the heading is visible, even if the section can't reach the top.
-- **375px:** the links wrap and are centered.
+- [ ] **Step 5: UI states without credentials**
 
-- [ ] **Step 4: Commit**
+Run `npm run dev`, go to the Contact section, and check each state against the approved HTML preview (`.superpowers/brainstorm/.../contact-form-design.html`):
+- **Layout:** side by side at 1280px. At 768px and 375px it's stacked, with the text first. Name and Email sit side by side at 640px and above.
+- **Invalid:** click Send with empty fields. Three red messages appear, and no request is sent (check the Network tab). Typing in a field clears its error.
+- **Server 400:** enter `jane@company` (browser validation catches it). Then call the API with curl to confirm that the server rejects the same value.
+- **Sending → Failed:** fill the form validly and click Send. You'll see the spinner and "Sending…" briefly, then the failure notice with a mailto link, because there are no Gmail credentials yet. **The typed text is still in the fields** (Review Focus #2).
+- **Double submit (Review Focus #1):** double-click Send quickly. The Network tab should show exactly **one** `POST /api/contact`.
+- Tab order: Name, Email, Message, Send. The honeypot is never focused.
+
+- [ ] **Step 6: Real end-to-end send (needs the user's credentials)**
+
+**Pause and ask the user** to:
+1. Turn on 2-Step Verification for their Google account, then create an App Password at https://myaccount.google.com/apppasswords (name it "Portfolio").
+2. Optionally, sign up at https://www.zerobounce.net and copy the API key.
+3. Run `cp .env.example .env.local` and fill in the real values. **Never commit `.env.local`.**
+
+Then restart `npm run dev` and submit the form using a **real address you can check** as the visitor email. Expected:
+- The success state reads "Thanks, {name}!".
+- The email arrives in the Gmail inbox with subject "Portfolio message from {name}", and **Reply** addresses the visitor email.
+- With a ZeroBounce key set: submit `someone@gmial.com`. Expected: "This email address doesn't seem to exist." and possibly "Did you mean …?". Clicking the suggestion fills the field.
+
+Run `git status --short` and confirm `.env.local` is **not** listed.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add -A
-git commit -m "feat: add contact section
+git add components/ContactForm.tsx components/Contact.tsx app/page.tsx
+git commit -m "feat: add contact section with working email form
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
 ---
 
-### Task 8: Responsive, accessibility & performance QA
+### Task 11: Responsive, accessibility & performance QA
 
 **Files:**
 - Modify: only files where a check below finds a problem. `data/content.ts` is changed temporarily in Step 3 and reverted.
 
 **Interfaces:**
-- Consumes: the complete page from Tasks 1–7.
+- Consumes: the complete page from Tasks 1–10.
 - Produces: a verified page. Any fixes are committed.
 
 Use `npm run build && npm run start` (production mode) for this task. Dev mode is slower and not representative for Lighthouse.
@@ -1277,22 +2166,23 @@ Check the page at **320, 375, 768, 1024 and 1280px**, each in **light** and **da
 - The nav stays on one line.
 - Project cards are stacked below 1024px and side-by-side at 1024px and above.
 - Skills cards are stacked below 768px and in 3 columns at 768px and above.
+- The contact card is stacked below 1024px and side-by-side at 1024px and above. The form inputs are full width and readable, and the error and success colors are legible in both themes.
 - The glow, chips, cards and borders are visible in both themes.
 
 Fix any issue in the relevant component, then re-run `npm run build`.
 
 - [ ] **Step 2: Keyboard pass**
 
-Starting from the top, press Tab through the page. Expected: the order is logo, nav links, Resume, GitHub, project links, then contact links, and every stop shows the caramel focus ring. Enter on a nav link jumps to its section.
+Starting from the top, press Tab through the page. Expected: the order is logo, nav links, Resume, GitHub, project links, contact links, then Name, Email, Message and Send. Every stop shows the caramel focus ring, and the honeypot is never focused. Enter on a nav link jumps to its section, and Enter in a text input submits the form.
 
-- [ ] **Step 3: Long-content stress test (Review Focus #1)**
+- [ ] **Step 3: Long-content stress test (Review Focus #3)**
 
 Temporarily edit `data/content.ts`:
 - `name: "Maximilian Alexander Featherstonehaugh"`
 - `email: "maximilian.featherstonehaugh.internships@university-example.edu"`
 - First project `name: "Collaborative Realtime Whiteboard Platform"`
 
-Rebuild and check at **320px**. Expected: the name, email and project title wrap inside the viewport, with no horizontal scroll. If anything overflows, add `break-words` (or `min-w-0` on its flex/grid parent) in the owning component. Then **revert `data/content.ts`** (`git checkout data/content.ts`) and confirm `git diff data/content.ts` is empty.
+Rebuild and check at **320px**. Expected: the name, email (both the contact link and the failure notice) and project title wrap inside the viewport, with no horizontal scroll. If anything overflows, add `break-words` (or `min-w-0` on its flex/grid parent) in the owning component. Then **revert `data/content.ts`** (`git checkout data/content.ts`) and confirm `git diff data/content.ts` is empty.
 
 - [ ] **Step 4: Anchors and deep links (Review Focus #4)**
 
@@ -1300,16 +2190,16 @@ Open `http://localhost:3000/#projects`, `/#skills` and `/#contact` directly in a
 
 - [ ] **Step 5: Reduced motion (Review Focus #5)**
 
-In DevTools, open Rendering and set "Emulate CSS media feature prefers-reduced-motion: reduce", then reload. Expected: sections appear without sliding, cards don't lift and screenshots don't zoom on hover, nav links jump instantly, and **all content is visible**.
+In DevTools, open Rendering and set "Emulate CSS media feature prefers-reduced-motion: reduce", then reload. Expected: sections appear without sliding, cards don't lift and screenshots don't zoom on hover, the send spinner doesn't spin (the "Sending…" text remains), nav links jump instantly, and **all content is visible**.
 
 - [ ] **Step 6: Lighthouse**
 
 In DevTools, open Lighthouse, choose Mobile and all four categories, and run it against `http://localhost:3000`.
-Expected: **≥ 90** in Performance, Accessibility, Best Practices and SEO. For anything below 90, fix the specific audits it lists (for example missing alt text, contrast, or link names) and re-run.
+Expected: **≥ 90** in Performance, Accessibility, Best Practices and SEO. For anything below 90, fix the specific audits it lists (for example missing labels, contrast, or link names) and re-run.
 
 - [ ] **Step 7: Final automated checks and commit**
 
-Run: `npm run check && npm run build && npm run lint`. Expected: all pass.
+Run: `npm test && npm run check && npm run build && npm run lint`. Expected: all pass.
 If Steps 1–6 required fixes:
 ```bash
 git add -A
@@ -1320,13 +2210,13 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ---
 
-### Task 9: Deploy to Vercel
+### Task 12: Deploy to Vercel
 
 **Files:** none (the user performs the account steps, and the executor provides the commands)
 
 **Interfaces:**
-- Consumes: the committed `main` branch.
-- Produces: a live URL that redeploys automatically on every push to `main`.
+- Consumes: the committed `main` branch, and the user's Gmail App Password and ZeroBounce key from Task 10.
+- Produces: a live URL that redeploys automatically on every push to `main`, with a working contact form.
 
 - [ ] **Step 1: The user creates an empty GitHub repo**
 
@@ -1338,17 +2228,17 @@ On github.com, click **New repository**, name it `portfolio`, make it **Public**
 git remote add origin https://github.com/<your-username>/portfolio.git
 git push -u origin main
 ```
-Expected: the branch `main` is pushed and the files appear on GitHub. Confirm that `.superpowers/` is **not** in the repo.
+Expected: the branch `main` is pushed. On GitHub, confirm that **neither** `.superpowers/` **nor** `.env.local` is in the repo, and that `.env.example` is.
 
-- [ ] **Step 3: The user imports the repo on Vercel**
+- [ ] **Step 3: The user imports the repo on Vercel and adds secrets**
 
-On vercel.com, click **Add New… → Project**, import `portfolio`, keep the defaults (Framework: Next.js), and click **Deploy**.
+On vercel.com, click **Add New… → Project** and import `portfolio`. Before clicking Deploy, open **Environment Variables** and add `GMAIL_USER`, `GMAIL_APP_PASSWORD` and `ZEROBOUNCE_API_KEY`, using the same values as `.env.local`. Then click **Deploy**.
 Expected: the build succeeds and the site is live at `https://portfolio-<something>.vercel.app`.
 
 - [ ] **Step 4: Smoke-test the live site**
 
-On the live URL, on both a phone and a desktop: the Resume PDF opens, the nav links scroll, and the GitHub and LinkedIn links open.
+On the live URL, on both a phone and a desktop: the Resume PDF opens, the nav links scroll, and the GitHub and LinkedIn links open. **Send one real message through the form** and confirm it arrives in Gmail. If it fails, check Vercel → Project → Logs for the `[contact]` lines.
 
 - [ ] **Step 5: Explain the update loop to the user**
 
-Edit `data/content.ts`, replace `public/resume.pdf`, or add screenshots to `public/projects/`. Then run `npm run check`, commit and `git push`. Vercel redeploys in about a minute.
+Edit `data/content.ts`, replace `public/resume.pdf`, or add screenshots to `public/projects/`. Then run `npm run check`, commit and `git push`. Vercel redeploys in about a minute. Changing a secret in Vercel requires a **Redeploy** from the Vercel dashboard to take effect.
