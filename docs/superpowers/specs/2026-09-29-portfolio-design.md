@@ -37,7 +37,7 @@ A one-page personal portfolio used to apply for **software development and AI in
 | `--bg` | `#efe9e3` | `#15110f` | Page background |
 | `--surface` | `#faf7f3` | `#1f1a17` | Cards |
 | `--fg` | `#2b221d` | `#efe8e2` | Main text |
-| `--muted` | `#7c6d63` | `#a3958a` | Secondary text |
+| `--muted` | `#726359` | `#a3958a` | Secondary text |
 | `--border` | `#ddd2c7` | `#322a25` | Card and button borders |
 | `--accent` | `#7a5438` | `#c9a07a` | Links, primary button, section labels, focus ring |
 | `--on-accent` | `#ffffff` | `#15110f` | Text on the accent button |
@@ -131,6 +131,7 @@ export type Project = {
 export const profile: {
   name: string; title: string; logo: string;
   email: string; github: string; linkedin: string;
+  contactLine: string;   // friendly line in the Contact section
   resume: string;        // "/resume.pdf"
 };
 
@@ -147,7 +148,7 @@ Until real content is provided, the file holds clearly fake placeholder data. `p
 
 ### 5.2 Client vs server
 
-All components are Server Components except `FadeIn`, `Navbar`, and any small wrapper that needs Motion hover/entrance animation (e.g. the hero stagger). This keeps the JS sent to the browser minimal.
+All components are Server Components except `FadeIn`, `Navbar`, and `MotionProvider` (wraps `<MotionConfig>`). The hero stagger reuses `FadeIn` with delays. Hover effects are plain CSS transitions (Tailwind `motion-safe:` variants), so cards stay server-rendered. This keeps the JS sent to the browser minimal.
 
 ## 6. Animation & Motion
 
@@ -181,6 +182,7 @@ All components are Server Components except `FadeIn`, `Navbar`, and any small wr
 No unit-test framework (no logic to test). Verification per step:
 
 1. `npm run build` passes (types + build).
+1a. `npm run check` passes: `scripts/check-contrast.mjs` (every text/background pair in `globals.css` ≥ 4.5:1, light and dark) and `scripts/check-content.mjs` (resume and screenshot files exist, 2–4 projects, links are valid `https:`, no empty skill groups).
 2. `npm run lint` passes.
 3. Browser check at **375px, 768px, 1280px**: no horizontal scroll, correct stacking, readable text.
 4. Light and dark mode both checked.
