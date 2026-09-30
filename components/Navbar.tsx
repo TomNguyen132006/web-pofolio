@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useMotionValueEvent, useScroll } from "motion/react";
+import { useSyncExternalStore } from "react";
 import { profile } from "@/data/content";
 
 const links = [
@@ -10,10 +9,17 @@ const links = [
   { href: "#contact", label: "Contact" },
 ];
 
+// Reads "has the page scrolled?" straight from the browser, including right after
+// hydration, so a page opened at a #anchor gets the solid navbar immediately.
+function subscribe(onChange: () => void) {
+  window.addEventListener("scroll", onChange, { passive: true });
+  return () => window.removeEventListener("scroll", onChange);
+}
+const isScrolled = () => window.scrollY > 8;
+const isScrolledOnServer = () => false;
+
 export default function Navbar() {
-  const { scrollY } = useScroll();
-  const [scrolled, setScrolled] = useState(false);
-  useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 8));
+  const scrolled = useSyncExternalStore(subscribe, isScrolled, isScrolledOnServer);
 
   return (
     <header

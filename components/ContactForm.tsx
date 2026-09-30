@@ -47,6 +47,8 @@ export default function ContactForm({ fallbackEmail }: { fallbackEmail: string }
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...input, website }),
+        // Never leave the visitor on "Sending…": after 30s show the email-me fallback.
+        signal: AbortSignal.timeout(30_000),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -127,7 +129,7 @@ export default function ContactForm({ fallbackEmail }: { fallbackEmail: string }
                 <button
                   type="button"
                   onClick={() => update("email", suggestion)}
-                  className="mt-1 text-sm text-accent underline underline-offset-[3px]"
+                  className="mt-1 text-left text-sm break-all text-accent underline underline-offset-[3px]"
                 >
                   Did you mean {suggestion}?
                 </button>
