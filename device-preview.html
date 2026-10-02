@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xem trước trên thiết bị</title>
+<!--
+  Mở file này trong Chrome (kéo thả vào trình duyệt) trong lúc `npm run dev` đang chạy.
+  Mỗi khung là một <iframe> đúng kích thước màn hình thiết bị, nên các breakpoint (sm:, md:…) hoạt động như thật.
+  Không nằm trong public/, nên file này không bị đưa lên website.
+-->
+<style>
+  :root {
+    --bg: #1c1a1b;
+    --panel: #2a2627;
+    --fg: #f4eeef;
+    --muted: #b3a9ab;
+    --accent: #8c1d2b;
+    --frame: #0f0e0e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header {
+    position: sticky; top: 0; z-index: 1;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
+    padding: 12px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid #3a3435;
+  }
+  h1 { margin: 0 auto 0 0; font-size: 16px; }
+  label { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+  input[type="text"] {
+    width: 220px; padding: 6px 10px; border-radius: 8px;
+    border: 1px solid #4a4244; background: var(--bg); color: var(--fg);
+  }
+  input[type="range"] { accent-color: var(--accent); }
+  button {
+    padding: 7px 14px; border: 0; border-radius: 999px; cursor: pointer;
+    background: var(--accent); color: #fff; font-weight: 600;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px; background: var(--bg); color: var(--muted); cursor: pointer;
+  }
+  .chip input { accent-color: var(--accent); margin: 0; }
+  main {
+    display: flex; flex-wrap: wrap; align-items: flex-start; gap: 32px;
+    padding: 24px 16px 48px;
+  }
+  figure { margin: 0; }
+  figcaption { margin-bottom: 8px; color: var(--muted); }
+  figcaption b { color: var(--fg); font-weight: 600; }
+  /* The outer box takes the scaled size so the layout flows correctly; the inner box is the real device size. */
+  .device { overflow: hidden; border-radius: 28px; background: var(--frame); padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+  .screen { overflow: hidden; border-radius: 18px; background: #fff; }
+  .screen iframe { border: 0; display: block; transform-origin: 0 0; background: #fff; }
+  .hint { padding: 0 16px 24px; color: var(--muted); max-width: 70ch; }
+  .hint code { color: var(--fg); }
+  @media (max-width: 640px) {
+    input[type="text"] { width: 100%; }
+    label { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Xem trước trên thiết bị</h1>
+  <label>Địa chỉ <input id="url" type="text" spellcheck="false"></label>
+  <label>Thu phóng <input id="zoom" type="range" min="30" max="100" step="5"> <span id="zoomVal"></span></label>
+  <button id="reload" type="button">Tải lại</button>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main id="stage"></main>
+
+<p class="hint">
+  Khung trắng trống? Kiểm tra <code>npm run dev</code> đang chạy và địa chỉ ở trên khớp với dòng
+  <code>Local: http://localhost:…</code> trong terminal. Lưu ý: khung chỉ giả lập <b>kích thước màn hình</b>;
+  thao tác chạm, font riêng của iOS và thanh địa chỉ của Safari thì chỉ thấy được trên thiết bị thật.
+</p>
+
+<script>
+  // ✏️ Add or remove devices here. Sizes are CSS pixels (what the browser uses for sm:/md:/lg: breakpoints).
+  // Only iPhone 13 and newer, and the current iPad lineup. Models sharing a screen size are grouped into one entry.
+  // iPad sizes are portrait; landscape frames are generated from the "iPad dọc/ngang" chips below.
+  const devices = [
+    { id: "ip13mini",  name: "iPhone 13 mini",                       w: 375,  h: 812,  on: true  },
+    { id: "ip13",      name: "iPhone 13 / 13 Pro / 14 / 16e",        w: 390,  h: 844,  on: true  },
+    { id: "ip15",      name: "iPhone 14 Pro / 15 / 15 Pro / 16",     w: 393,  h: 852,  on: false },
+    { id: "ip17",      name: "iPhone 16 Pro / 17 / 17 Pro",          w: 402,  h: 874,  on: true  },
+    { id: "ipAir",     name: "iPhone Air",                           w: 420,  h: 912,  on: false },
+    { id: "ip13max",   name: "iPhone 13 Pro Max / 14 Plus",          w: 428,  h: 926,  on: false },
+    { id: "ip15max",   name: "iPhone 14 Pro Max / 15 Plus / 15 Pro Max / 16 Plus", w: 430, h: 932, on: false },
+    { id: "ip17max",   name: "iPhone 16 Pro Max / 17 Pro Max",       w: 440,  h: 956,  on: true  },
+    { id: "ipadMini",  name: "iPad mini (A17 Pro)",                  w: 744,  h: 1133, on: false, ipad: true },
+    { id: "ipad11",    name: "iPad (A16) / iPad Air 11″",            w: 820,  h: 1180, on: true,  ipad: true },
+    { id: "ipadPro11", name: "iPad Pro 11″",                         w: 834,  h: 1210, on: false, ipad: true },
+    { id: "ipadAir13", name: "iPad Air 13″",                         w: 1024, h: 1366, on: false, ipad: true },
+    { id: "ipadPro13", name: "iPad Pro 13″",                         w: 1032, h: 1376, on: false, ipad: true },
+  ];
+  const orientations = [
+    { id: "portrait",  name: "iPad dọc",   on: true },
+    { id: "landscape", name: "iPad ngang", on: true },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const read = (key, fallback) => { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } };
+  const save = (key, value) => { try { localStorage.setItem(key, value); } catch {} };
+
+  $("url").value = params.get("url") || read("preview-url", "http://localhost:3000/");
+  $("zoom").value = params.get("zoom") || read("preview-zoom", "50");
+
+  // Device on/off chips
+  for (const d of [...devices, ...orientations]) {
+    const saved = read("preview-" + d.id, null);
+    if (saved !== null) d.on = saved === "1";
+    const chip = document.createElement("label");
+    chip.className = "chip";
+    chip.innerHTML = `<input type="checkbox" ${d.on ? "checked" : ""}> ${d.name}`;
+    chip.querySelector("input").addEventListener("change", (e) => {
+      d.on = e.target.checked; save("preview-" + d.id, d.on ? "1" : "0"); render();
+    });
+    $("chips").append(chip);
+  }
+
+  function render() {
+    const url = $("url").value.trim();
+    const scale = Number($("zoom").value) / 100;
+    $("zoomVal").textContent = $("zoom").value + "%";
+    const [portrait, landscape] = orientations.map((o) => o.on);
+    const frames = devices.filter((d) => d.on).flatMap((d) => {
+      if (!d.ipad) return [d];
+      const out = [];
+      if (portrait) out.push({ ...d, name: d.name + " – dọc" });
+      if (landscape) out.push({ ...d, name: d.name + " – ngang", w: d.h, h: d.w });
+      return out;
+    });
+    $("stage").replaceChildren(...frames.map((d) => {
+      const fig = document.createElement("figure");
+      fig.innerHTML = `
+        <figcaption><b>${d.name}</b> · ${d.w}×${d.h}</figcaption>
+        <div class="device">
+          <div class="screen" style="width:${d.w * scale}px;height:${d.h * scale}px">
+            <iframe title="${d.name}" src="${url}" style="width:${d.w}px;height:${d.h}px;transform:scale(${scale})"></iframe>
+          </div>
+        </div>`;
+      return fig;
+    }));
+  }
+
+  $("zoom").addEventListener("input", () => { save("preview-zoom", $("zoom").value); render(); });
+  $("url").addEventListener("change", () => { save("preview-url", $("url").value.trim()); render(); });
+  $("reload").addEventListener("click", render);
+  render();
+</script>
+</body>
+</html>
