@@ -40,11 +40,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* `phone:` = narrower than 768px, or a short touch screen (a phone held sideways).
+/* `phone:` = narrower than 744px (iPad mini portrait, so every iPad counts as a tablet),
+   or a short touch screen (a phone held sideways).
    Keep in sync with PHONE_QUERY in components/ResumeModal.tsx. */
 /* (Block form on purpose: the one-line form silently drops everything after a comma.) */
 @custom-variant phone {
-  @media (max-width: 767px) {
+  @media (max-width: 743px) {
     @slot;
   }
   @media (pointer: coarse) and (max-height: 500px) {

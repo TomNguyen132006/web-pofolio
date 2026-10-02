@@ -66,22 +66,22 @@ export default function FitnessTrackerPage() {
           </Section>
 
           <Section title="Results">
-            {/* Scrolls sideways on very narrow phones instead of squashing the columns. */}
+            {/* Fits a 375px phone; still scrolls sideways instead of squashing the columns if it ever gets too narrow. */}
             <div className="overflow-x-auto rounded-2xl border border-border">
-              <table className="w-full min-w-[28rem] border-collapse text-left text-sm sm:text-base">
+              <table className="w-full min-w-[20rem] border-collapse text-left text-sm sm:text-base">
                 <thead className="bg-surface">
                   <tr>
-                    <th scope="col" className="px-4 py-3 font-semibold">How I tested</th>
-                    <th scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">My result</th>
-                    <th scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">Original paper</th>
+                    <th scope="col" className="px-3 py-3 font-semibold sm:px-4">How I tested</th>
+                    <th scope="col" className="px-3 py-3 font-semibold sm:px-4 sm:whitespace-nowrap">My result</th>
+                    <th scope="col" className="px-3 py-3 font-semibold sm:px-4 sm:whitespace-nowrap">Original paper</th>
                   </tr>
                 </thead>
                 <tbody>
                   {results.map((row) => (
                     <tr key={row.test} className="border-t border-border">
-                      <th scope="row" className="px-4 py-3 font-normal">{row.test}</th>
-                      <td className="px-4 py-3 font-mono tabular-nums">{row.mine}</td>
-                      <td className="px-4 py-3 font-mono text-muted tabular-nums">{row.paper}</td>
+                      <th scope="row" className="px-3 py-3 font-normal sm:px-4">{row.test}</th>
+                      <td className="px-3 py-3 font-mono tabular-nums sm:px-4">{row.mine}</td>
+                      <td className="px-3 py-3 font-mono text-muted tabular-nums sm:px-4">{row.paper}</td>
                     </tr>
                   ))}
                 </tbody>

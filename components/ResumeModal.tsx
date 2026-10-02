@@ -7,11 +7,12 @@ import { FaDownload } from "react-icons/fa6";
 // so the URL is "/resume.pdf" (no "public" in the path).
 const RESUME_PATH = "/resume.pdf";
 
-// Phones: narrower than 768px, or a touch screen that is short (a phone held sideways).
+// Phones: narrower than 744px (the iPad mini's portrait width, so every iPad gets the modal),
+// or a touch screen that is short (a phone held sideways).
 // iOS Safari can't show a PDF inside a page well (cut off, zoomed in), so phones open the PDF
 // in a new tab instead, where the built-in iOS PDF viewer takes over. Keep in sync with the
 // `phone:` variant in globals.css.
-const PHONE_QUERY = "(max-width: 767px), (pointer: coarse) and (max-height: 500px)";
+const PHONE_QUERY = "(max-width: 743px), (pointer: coarse) and (max-height: 500px)";
 
 // "View Resume" button + a modal that shows the PDF (iPad and desktop).
 // The button is a real link to the PDF, so it still works on phones and without JavaScript;
@@ -96,7 +97,7 @@ export default function ResumeModal() {
               download
               aria-label="Download resume"
               title="Download"
-              className="ml-auto grid size-9 place-items-center rounded-full bg-linear-to-r from-primary to-secondary text-on-primary transition-opacity duration-200 hover:opacity-90"
+              className="ml-auto grid size-9 place-items-center rounded-full bg-linear-to-r from-primary to-primary-light text-on-primary transition-opacity duration-200 hover:opacity-90"
             >
               <FaDownload aria-hidden className="size-4" />
             </a>
