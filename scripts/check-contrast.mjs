@@ -1,5 +1,5 @@
 // Reads the palette from app/globals.css and checks WCAG AA contrast (≥ 4.5:1)
-// for every text/background pair the site uses, in light and dark mode.
+// for every text/background pair the site uses.
 import { readFileSync } from "node:fs";
 
 const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
@@ -7,12 +7,23 @@ const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8")
 function readBlock(start, label) {
   if (start < 0) throw new Error(`Could not find the ${label} :root block in globals.css`);
   const body = css.slice(start, css.indexOf("}", start));
-  return Object.fromEntries([...body.matchAll(/--([\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+  const vars = Object.fromEntries([...body.matchAll(/--([\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
+  // Follow aliases like "--accent: var(--primary)" to the actual color.
+  for (const name of Object.keys(vars)) {
+    for (let hops = 0; vars[name].startsWith("var(") && hops < 10; hops++) {
+      const target = vars[name].match(/^var\(--([\w-]+)\)$/)?.[1];
+      if (!target || !vars[target]) throw new Error(`--${name} points to an unknown variable: ${vars[name]}`);
+      vars[name] = vars[target];
+    }
+  }
+  return vars;
 }
 
-const light = readBlock(css.indexOf(":root {"), "light");
+// The site is light-only (globals.css sets color-scheme: light). A dark palette is checked
+// too, but only if a "@media (prefers-color-scheme: dark)" block is added back.
+const modes = [["light", readBlock(css.indexOf(":root {"), "light")]];
 const darkMedia = css.indexOf("@media (prefers-color-scheme: dark)");
-const dark = readBlock(darkMedia < 0 ? -1 : css.indexOf(":root {", darkMedia), "dark");
+if (darkMedia >= 0) modes.push(["dark", readBlock(css.indexOf(":root {", darkMedia), "dark")]);
 
 function parse(value) {
   if (value.startsWith("#")) return { rgb: [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16)), a: 1 };
@@ -56,7 +67,7 @@ const pairs = [
 ];
 
 let failed = false;
-for (const [mode, vars] of [["light", light], ["dark", dark]]) {
+for (const [mode, vars] of modes) {
   for (const [text, bgName, under] of pairs) {
     for (const name of [text, bgName, under].filter(Boolean)) {
       if (!vars[name]) throw new Error(`Missing --${name} in the ${mode} palette`);

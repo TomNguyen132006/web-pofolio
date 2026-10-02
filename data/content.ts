@@ -6,10 +6,15 @@ export type Project = {
   name: string;
   description: string; // 1–2 sentences
   learned: string; // 1 sentence
+  learnedLabel?: string; // optional: heading above "learned" (default "What I learned")
   tech: string[];
   github: string;
-  demo?: string; // optional: link is hidden if missing
+  demoUrl?: string; // optional: "Live Demo" button is hidden if missing or ""
+  detailsUrl?: string; // optional: "Details" button is hidden if missing or "". Usually a page on this site ("/projects/my-app", opens in the same tab)
   image?: string; // optional: initials placeholder if missing
+  imageAlt?: string; // optional: defaults to "Screenshot of <name>"
+  imageFit?: "cover" | "contain"; // optional: "contain" shows the whole image with padding (default "cover")
+  imageCredit?: string; // optional: small caption under the image, e.g. "Illustration: Jane Doe"
 };
 
 export type Profile = {
@@ -20,6 +25,7 @@ export type Profile = {
   github: string;
   linkedin: string;
   resume: string;
+  photo: string; // headshot in public/
   contactLine: string;
 };
 
@@ -30,24 +36,33 @@ export type Skills = {
 };
 
 export const profile: Profile = {
-  name: "Your Name",
-  title: "Computer science student building software & AI tools.",
-  logo: "yourname.dev",
-  email: "you@example.com",
-  github: "https://github.com/your-username",
-  linkedin: "https://www.linkedin.com/in/your-username",
+  name: "Hoang Nguyen",
+  title: "Computer Science and Applied Mathematics student",
+  logo: "",
+  email: "minhtamnguyenhoang664468@gmail.com",
+  github: "https://github.com/TomNguyen132006",
+  linkedin: "https://www.linkedin.com/in/hoang-nguyen-994a8b313",
   resume: "/resume.pdf",
+  photo: "/profile.jpg",
   contactLine: "I'm open to software engineering and AI internships. Send me a message, or reach me directly:",
 };
 
 export const projects: Project[] = [
   {
-    name: "Study Buddy AI",
-    description: "A web app that turns lecture notes into practice quiz questions using a large language model.",
-    learned: "How to design prompts, stream responses to the UI, and handle API rate limits.",
-    tech: ["Python", "FastAPI", "React", "OpenAI API"],
-    github: "https://github.com/your-username/study-buddy",
-    demo: "https://study-buddy.example.com",
+    name: "Machine Learning Fitness Tracker",
+    description: "A machine learning pipeline that turns wearable accelerometer and gyroscope data into barbell exercise predictions and automatic rep counts.",
+    learnedLabel: "Goal",
+    learned:
+      "Develop a Python pipeline that processes and visualizes motion sensor data, then trains a model to classify barbell exercises and count repetitions.",
+    tech: ["Python", "Pandas", "scikit-learn", "SciPy", "Matplotlib"],
+    github: "https://github.com/TomNguyen132006/MachineLearningFitnessTrack",
+    demoUrl: "https://tomnguyen132006.github.io/MachineLearningFitnessTrack/demo/",
+    detailsUrl: "/projects/fitness-tracker", // page: app/projects/fitness-tracker/page.tsx
+    image: "/projects/ml-fitness-card.png",
+    imageAlt:
+      "Illustrations of the five barbell exercises the model classifies: bench press, deadlift, overhead press, barbell row, squat",
+    imageFit: "contain",
+    imageCredit: "Illustration: Dave Ebbelaar",
   },
   {
     name: "Campus Eats",

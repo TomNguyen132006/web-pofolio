@@ -169,7 +169,7 @@ export default function ContactForm({ fallbackEmail }: { fallbackEmail: string }
           <button
             type="submit"
             disabled={status === "sending"}
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-on-accent transition-opacity duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-linear-to-r from-primary to-primary-light px-5 py-2.5 text-sm font-semibold text-on-primary transition-opacity duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {status === "sending" ? (
               <>

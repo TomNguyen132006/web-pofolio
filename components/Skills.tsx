@@ -1,5 +1,6 @@
 import Chip from "@/components/Chip";
 import FadeIn from "@/components/FadeIn";
+import Reveal from "@/components/Reveal";
 import SectionHeading from "@/components/SectionHeading";
 import { skills } from "@/data/content";
 
@@ -12,9 +13,9 @@ const groups = [
 export default function Skills() {
   return (
     <section id="skills" aria-labelledby="skills-heading" className="wrap section-pad">
-      <FadeIn>
+      <Reveal>
         <SectionHeading id="skills-heading" label="Skills" title="What I work with" />
-      </FadeIn>
+      </Reveal>
       <div className="mt-12 grid gap-6 md:grid-cols-3">
         {groups.map((group, i) => (
           <FadeIn key={group.title} delay={i * 0.08} className="h-full">

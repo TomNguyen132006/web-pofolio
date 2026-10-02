@@ -1,36 +1,24 @@
 @import "tailwindcss";
 
-/* Palette: "Mocha + Caramel". Change colors here only. */
+/* Palette: Missouri State maroon. Change colors here only.
+   --primary / --primary-light are the brand gradient (#5E0009 -> #8C1D2B), used on buttons and the About band.
+   Maroon is dark, so text on it is white (--on-primary), and it doubles as the link/text accent on white. */
 :root {
-  --bg: #efe9e3;
-  --surface: #faf7f3;
-  --fg: #2b221d;
-  --muted: #726359;
-  --border: #ddd2c7;
-  --accent: #7a5438;
+  --bg: #ffffff;
+  --surface: #f9f7f7;
+  --fg: #272341;
+  --muted: #5f5f5f;
+  --border: #d2d2d2;
+  --primary: #5e0009; /* Missouri State maroon */
+  --primary-light: #8c1d2b; /* gradients and hover */
+  --on-primary: #ffffff;
+  --accent: var(--primary);
   --on-accent: #ffffff;
-  --chip-bg: #e6dacd;
-  --chip-fg: #6a4730;
-  --glow: rgba(190, 150, 110, 0.45);
+  --chip-bg: #f6e6e8;
+  --chip-fg: var(--primary);
+  --glow: rgba(140, 29, 43, 0.3);
   --error: #b3261e;
   --success: #3f6b3a;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #15110f;
-    --surface: #1f1a17;
-    --fg: #efe8e2;
-    --muted: #a3958a;
-    --border: #322a25;
-    --accent: #c9a07a;
-    --on-accent: #15110f;
-    --chip-bg: rgba(201, 160, 122, 0.14);
-    --chip-fg: #dcc0a4;
-    --glow: rgba(201, 160, 122, 0.24);
-    --error: #f2a39c;
-    --success: #a8d5a0;
-  }
 }
 
 @theme inline {
@@ -39,6 +27,9 @@
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-on-primary: var(--on-primary);
   --color-accent: var(--accent);
   --color-on-accent: var(--on-accent);
   --color-chip-bg: var(--chip-bg);
@@ -47,6 +38,30 @@
   --color-success: var(--success);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/* `phone:` = narrower than 768px, or a short touch screen (a phone held sideways).
+   Keep in sync with PHONE_QUERY in components/ResumeModal.tsx. */
+/* (Block form on purpose: the one-line form silently drops everything after a comma.) */
+@custom-variant phone {
+  @media (max-width: 767px) {
+    @slot;
+  }
+  @media (pointer: coarse) and (max-height: 500px) {
+    @slot;
+  }
+}
+
+/* Hero entrance: fade + slide up 16px, CSS only (no JavaScript needed), ends fully visible.
+   Used as `motion-safe:animate-hero-in`; "both" keeps it hidden during an animation-delay. */
+@theme {
+  --animate-hero-in: hero-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  @keyframes hero-in {
+    from {
+      opacity: 0;
+      translate: 0 16px;
+    }
+  }
 }
 
 /* Centered content column used by every section. */
@@ -72,7 +87,7 @@
 }
 
 html {
-  color-scheme: light dark;
+  color-scheme: light; /* always the bright theme, even when the device is in dark mode */
 }
 
 /* Smooth scrolling is enabled only after the page has loaded (MotionProvider sets the
