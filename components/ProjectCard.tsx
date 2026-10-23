@@ -35,7 +35,7 @@ export default function ProjectCard({ project, imageRight }: Props) {
           />
         ) : (
           <div aria-hidden className="flex h-full items-center justify-center font-mono text-5xl font-medium text-chip-fg">
-            {initials(project.name)}
+            {project.initials ?? initials(project.name)}
           </div>
         )}
         {/* Sits in the bottom padding of the image box, so the card layout doesn't change. */}

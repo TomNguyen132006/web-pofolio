@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 1024" role="img" aria-labelledby="t">
+  <title id="t">Line illustration of an open book with sound waves rising from its pages, connected to a manuscript, a play button, headphones and a speaker</title>
+  <rect width="1536" height="1024" fill="#f6e6e8"/>
+  <g fill="none" stroke="#272341" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ground line -->
+    <path d="M320 880H1216"/>
+
+    <!-- open book -->
+    <path d="M440 600V860C560 830 700 840 768 880C836 840 976 830 1096 860V600"/>
+    <path d="M768 620C700 580 560 570 470 600V820C560 790 700 800 768 840Z"/>
+    <path d="M768 620C836 580 976 570 1066 600V820C976 790 836 800 768 840Z"/>
+    <path d="M520 650C580 640 650 645 710 670M520 700C580 690 650 695 710 720M520 750C570 742 620 745 670 760" stroke-width="6"/>
+    <path d="M1016 650C956 640 886 645 826 670M1016 700C956 690 886 695 826 720" stroke-width="6"/>
+    <path d="M1016 750C966 742 916 745 866 760" stroke="#5e0009" stroke-width="6"/>
+
+    <!-- sound bars rising from the book -->
+    <g stroke="#5e0009" stroke-width="16">
+      <path d="M528 470V510"/><path d="M576 440V540"/><path d="M624 400V560"/><path d="M672 360V580"/>
+      <path d="M720 300V595"/><path d="M768 250V600"/><path d="M816 320V595"/><path d="M864 380V580"/>
+      <path d="M912 420V560"/><path d="M960 450V540"/><path d="M1008 475V505"/>
+    </g>
+
+    <!-- manuscript card (top left) -->
+    <rect x="180" y="220" width="220" height="300" rx="16"/>
+    <path d="M220 280H340M220 330H360M220 380H320M220 430H355" stroke-width="7"/>
+    <path d="M220 480H300" stroke="#5e0009" stroke-width="7"/>
+    <path d="M400 400H420Q440 400 440 420V600"/>
+
+    <!-- player card (top right) -->
+    <rect x="1136" y="240" width="260" height="220" rx="16"/>
+    <circle cx="1266" cy="320" r="42" stroke="#5e0009"/>
+    <path d="M1254 302L1286 320L1254 338Z" stroke="#5e0009" fill="#5e0009" stroke-width="4"/>
+    <path d="M1176 408H1356" stroke-width="7"/>
+    <path d="M1176 408H1270" stroke="#5e0009" stroke-width="7"/>
+    <circle cx="1270" cy="408" r="8" fill="#f6e6e8" stroke="#5e0009" stroke-width="5"/>
+    <path d="M1136 400H1116Q1096 400 1096 420V600"/>
+
+    <g transform="translate(-40 0)">
+    <path d="M190 780V740C190 670 240 620 300 620C360 620 410 670 410 740V780" stroke="#5e0009"/>
+    <rect x="170" y="740" width="50" height="90" rx="20"/>
+    <rect x="380" y="740" width="50" height="90" rx="20"/>
+
+    </g>
+    <!-- speaker (bottom right) -->
+    <path d="M1110 760H1170L1230 710V850L1170 800H1110Z"/>
+    <path d="M1260 740C1285 770 1285 800 1260 830" stroke="#5e0009"/>
+    <path d="M1300 710C1345 760 1345 810 1300 860" stroke="#5e0009"/>
+  </g>
+</svg>
