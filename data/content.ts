@@ -120,7 +120,7 @@ export const projects: Project[] = [
 ];
 
 export const skills: Skills = {
-  languages: ["Python", "TypeScript", "JavaScript", "Java", "SQL"],
+  languages: ["Python", "TypeScript", "JavaScript", "Java", "C", "C++", "SQL"],
   frameworks: ["React", "Next.js", "FastAPI", "Tailwind CSS", "PyTorch"],
-  cloudAI: ["AWS", "Vercel", "Docker", "OpenAI API", "Git"],
+  cloudAI: ["AWS", "Vercel", "Render", "Docker", "Git", "Gemini API", "NVIDIA Nemotron", "NVIDIA Parakeet", "Tavily API", "Piper TTS"],
 };

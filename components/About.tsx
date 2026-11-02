@@ -26,6 +26,22 @@ const socials: {
   { label: "Email", href: `mailto:${profile.email}`, icon: FaEnvelope },
 ];
 
+// ✏️ Edit the achievements here. Each group becomes a section on the page.
+const groups: { heading: string; items: { title: string; text: string; sub?: string[]; href?: string; logo?: string }[] }[] = [
+  {
+    heading: "Certifications & Recognition",
+    items: [
+      {
+        title: "AWS Cloud Practitioner Certified",
+        href: "/certs/aws-cloud-practitioner.pdf", // opens the certificate PDF in a new tab
+        logo: "/certs/aws-cloud-practitioner.png",
+        text: "Demonstrated foundational knowledge of AWS services, cloud concepts, and best practices.",
+      },
+      { title: "Dean's List", text: "Recognized for academic excellence with GPA above 3.5." },
+    ],
+  },
+];
+
 export default function About() {
   return (
     // Full-width maroon band. The bottom edge is cut on a slant:
@@ -94,6 +110,49 @@ export default function About() {
               </Reveal>
             </div>
           </Reveal>
+        </div>
+        {/* Achievements: scroll target for the "Achievements" nav link. */}
+        <div id="achievements" className="mx-auto mt-20 max-w-3xl scroll-mt-24 leading-relaxed">
+          <Reveal>
+            <h3 className="text-center text-3xl font-bold tracking-wide uppercase sm:text-4xl">Achievements</h3>
+          </Reveal>
+          {groups.map((group) => (
+            <Reveal key={group.heading}>
+              <section className="mt-10">
+                <h4 className="text-2xl font-bold tracking-tight">{group.heading}</h4>
+                <ul className="mt-4 list-disc space-y-4 pl-5 text-lg marker:text-white/70">
+                  {group.items.map((item) => (
+                    <li key={item.title} className="break-words">
+                      {item.logo && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.logo} alt="" aria-hidden width={64} height={64} className="mr-3 inline-block size-16 align-middle" />
+                      )}
+                      {item.href ? (
+                        <a
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold underline decoration-white/50 underline-offset-[3px] hover:decoration-white"
+                        >
+                          {item.title}
+                        </a>
+                      ) : (
+                        <strong className="font-semibold">{item.title}</strong>
+                      )}{" "}
+                      — {item.text}
+                      {item.sub && (
+                        <ul className="mt-2 list-[circle] space-y-1 pl-5 text-base text-white/90">
+                          {item.sub.map((line) => (
+                            <li key={line}>{line}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </Reveal>
+          ))}
         </div>
       </div>
     </section>
