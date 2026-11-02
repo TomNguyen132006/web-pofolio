@@ -28,7 +28,7 @@ for (const key of ["github", "linkedin"]) {
 }
 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) errors.push(`profile.email looks invalid: "${profile.email}"`);
 
-if (projects.length < 2 || projects.length > 4) errors.push(`Expected 2–4 projects, found ${projects.length}`);
+if (projects.length < 2 || projects.length > 5) errors.push(`Expected 2–5 projects, found ${projects.length}`);
 const seen = new Set();
 for (const p of projects) {
   if (seen.has(p.name)) errors.push(`Duplicate project name: "${p.name}"`);

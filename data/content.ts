@@ -101,11 +101,21 @@ export const projects: Project[] = [
     initials: "AN",
   },
   {
-    name: "Digit Classifier",
-    description: "A convolutional neural network that recognizes handwritten digits, with a small drawing demo.",
-    learned: "Training loops, overfitting, and how data augmentation improves accuracy.",
-    tech: ["Python", "PyTorch", "NumPy"],
-    github: "https://github.com/your-username/digit-classifier",
+    name: "Lecturesque",
+    description:
+      "Transform lectures into study materials. Auto-generates notes and slides with source citations verified by AI.",
+    learnedLabel: "Goal",
+    learned:
+      "Take a lecture transcript and produce study notes, slides and a timestamped transcript, with a judge model that checks every statement against the source.",
+    tech: ["Next.js", "React", "Python", "FastAPI", "LLM", "NVIDIA", "Vercel"],
+    github: "https://github.com/TomNguyen132006/Lecturesque",
+    demoUrl: "https://lecturesque.vercel.app/", // Vercel frontend
+    detailsUrl: "/projects/lecturesque", // page: app/projects/lecturesque/page.tsx
+    image: "/images/lecturesque-cover.svg",
+    imageAlt:
+      "Line illustration of a lecture transcript flowing through a three-stage pipeline into study notes, slides and a verified checkmark",
+    imageFit: "contain",
+    initials: "LQ",
   },
 ];
 

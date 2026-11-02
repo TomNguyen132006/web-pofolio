@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 1024" role="img" aria-labelledby="t">
+  <title id="t">Line illustration of a lecture transcript flowing through a processing pipeline into study notes, slides and a verified checkmark</title>
+  <rect width="1536" height="1024" fill="#F5E4E6"/>
+  <g fill="none" stroke="#272341" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M200 900H1336"/>
+
+    <!-- lecturer + board (far left) -->
+    <circle cx="250" cy="300" r="34"/>
+    <path d="M250 334V440M250 370L205 420M250 370L295 410M250 440L215 520M250 440L285 520"/>
+
+    <!-- transcript card with timestamps -->
+    <rect x="130" y="560" width="300" height="300" rx="16"/>
+    <path d="M165 610H215M165 670H215M165 730H215M165 790H215" stroke="#7A0A1A" stroke-width="7"/>
+    <path d="M235 610H395M235 670H385M235 730H395M235 790H360" stroke-width="7"/>
+    <path d="M250 340H330Q360 340 360 370V560"/>
+    <path d="M280 340H325" stroke-opacity="0"/>
+
+    <!-- microphone / sound bars near lecturer -->
+    <g stroke="#7A0A1A" stroke-width="12">
+      <path d="M340 260V300"/><path d="M370 235V325"/><path d="M400 255V305"/>
+    </g>
+
+    <!-- arrow to pipeline -->
+    <path d="M450 710H520"/><path d="M500 690L522 710L500 730"/>
+
+    <!-- pipeline: three stages -->
+    <rect x="540" y="640" width="130" height="140" rx="18"/>
+    <rect x="705" y="640" width="130" height="140" rx="18" stroke="#7A0A1A"/>
+    <rect x="870" y="640" width="130" height="140" rx="18"/>
+    <!-- stage 1: clean/organize -->
+    <path d="M575 685H635M575 710H625M575 735H635" stroke-width="7"/>
+    <!-- stage 2: generate (sparkle) -->
+    <path d="M770 675V745M735 710H805M745 685L795 735M795 685L745 735" stroke="#7A0A1A" stroke-width="7"/>
+    <!-- stage 3: judge (scales) -->
+    <path d="M935 670V750M905 750H965M905 690H965"/>
+    <path d="M905 690L890 730H920ZM965 690L950 730H980Z" stroke-width="6"/>
+    <path d="M670 710H705M835 710H870" stroke-width="7"/>
+
+    <!-- arrow to outputs -->
+    <path d="M1020 710H1080"/><path d="M1060 690L1082 710L1060 730"/>
+
+    <!-- notes document (top right) -->
+    <rect x="1110" y="190" width="240" height="290" rx="16"/>
+    <path d="M1145 245H1270" stroke="#7A0A1A" stroke-width="10"/>
+    <path d="M1145 295H1315M1145 335H1300M1145 375H1315M1145 415H1260" stroke-width="7"/>
+    <path d="M1290 440l16 16 30-34" stroke="#7A0A1A" stroke-width="8"/>
+
+    <!-- slide (middle right) -->
+    <rect x="1110" y="520" width="240" height="160" rx="16"/>
+    <path d="M1145 565H1250" stroke="#7A0A1A" stroke-width="10"/>
+    <path d="M1145 605H1300M1145 640H1250" stroke-width="7"/>
+    <path d="M1230 680V700M1190 710H1270" />
+
+    <!-- verified badge (bottom right) -->
+    <circle cx="1230" cy="800" r="48" stroke="#7A0A1A"/>
+    <path d="M1208 800l16 16 30-34" stroke="#7A0A1A" stroke-width="10"/>
+    <path d="M1100 800H1150" stroke-width="7"/>
+    <path d="M1100 800V690" stroke-width="7" stroke-opacity="0"/>
+
+    <!-- connector lines from pipeline to outputs -->
+    <path d="M1082 710V335H1110M1082 710V600H1110M1082 710V800H1100" stroke-width="6"/>
+  </g>
+</svg>
