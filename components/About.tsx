@@ -58,16 +58,16 @@ export default function About() {
             />
           </Reveal>
           <Reveal from="right" delay={150}>
-            {/* ✏️ Placeholder text: replace with your own. */}
+            {/* ✏️ Edit your bio here. */}
             <p className="text-lg">
-              I&apos;m a computer science student who enjoys turning ideas into
-              working software. Lorem ipsum dolor sit amet, consectetur
-              adipiscing elit, sed do eiusmod tempor incididunt ut labore.
+              Hi, I&apos;m Tom! I&apos;m a Computer Science and Applied Mathematics student at Missouri State
+              University, graduating in May 2028. I like turning ideas into software that actually works, even if it
+              takes a few tries to get there.
             </p>
             <p className="mt-4 text-lg">
-              Outside of class, I build side projects with web and AI tools. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat.
+              Outside of class, I build side projects with web and AI tools, like a machine learning fitness tracker
+              and a security review CLI. I&apos;m still learning a lot, especially about AI systems and LLM-powered
+              agents, and I try to ask questions and learn from the people around me along the way.
             </p>
             {/* Button and icons share a row from sm (640px) up. On phones the icons drop below the button,
                 centered under it: w-fit shrinks the box to the button's width so items-center lines them up. */}
