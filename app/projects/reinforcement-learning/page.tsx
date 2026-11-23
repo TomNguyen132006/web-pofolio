@@ -5,55 +5,154 @@ import ButtonLink from "@/components/ButtonLink";
 import Footer from "@/components/Footer";
 import { profile, projects } from "@/data/content";
 
-// Short write-up for the Q-Learning Maze Agent card's "Details" button.
+// Code walkthrough for the Q-Learning Maze Agent card's "Details" button.
+// It follows the q-grid.mp4 explainer video and the code in 2D/maze-input/2DGrid.py.
 // The GitHub and demo links come from data/content.ts, so they stay in sync with the card.
 const PROJECT_NAME = "Q-Learning Maze Agent";
 
 export const metadata: Metadata = {
   title: `${PROJECT_NAME} | ${profile.name}`,
   description:
-    "How a tabular Q-learning agent learns to solve a grid maze, and the browser game I built so anyone can draw a maze and watch it learn.",
+    "A walkthrough of the Python code behind a Q-learning agent that learns to solve a 3×3 grid maze, with an explainer video.",
 };
 
-const problems = [
-  "Reinforcement learning is usually taught through equations, and I could not tell if I understood them until I made something run.",
-  "I wanted to see an agent go from random wandering to a smart route, not just read that it can.",
-  "Libraries hide the learning loop. I wanted to write the environment, the Q-table and the update rule by hand.",
+type Block = { title: string; code: string; points: string[] };
+
+// Excerpts of 2DGrid.py, shortened to the lines the video highlights.
+const blocks: Block[] = [
+  {
+    title: "The environment: class Grid2D",
+    code: `class Grid2D:
+    def __init__(self, rows, cols, walls, traps):
+        ...
+
+    def reset(self):
+        self.pos = (0, 0)
+        return self.pos`,
+    points: [
+      "Grid2D takes the grid size, a set of wall cells and a set of trap cells.",
+      "reset() puts the agent back on cell (0, 0) at the start of every episode.",
+      "step(action) takes one of four actions: 0 = left, 1 = right, 2 = up, 3 = down.",
+    ],
+  },
+  {
+    title: "step(): walls, traps and rewards",
+    code: `x = max(x, 0);  y = max(y, 0)
+x = min(self.rows - 1, x)
+y = min(self.cols - 1, y)
+
+if (x, y) not in self.walls:
+    self.pos = (x, y)
+done = self.pos == (self.rows - 1, self.cols - 1)
+if done:
+    reward = 10
+elif self.pos in self.traps:
+    reward = -10
+else:
+    reward = -1
+return (self.pos, reward, done)`,
+    points: [
+      "Bumping into the edge: x and y are clamped to the grid with max and min, so the agent stays where it is.",
+      "Wall: if the cell it wants to enter is in walls, self.pos is not updated, so it stays put, just like at the edge.",
+      "Goal: reaching the last cell sets done = True and gives reward +10.",
+      "Trap: standing in a trap gives -10, much worse than a normal step, but the episode keeps going.",
+      "Every other step costs -1, which is what pushes the agent toward short paths.",
+    ],
+  },
+  {
+    title: "Setup: parameters and the Q-table",
+    code: `env = Grid2D(3, 3, {(1, 2)}, {(1, 1)})   # wall on (1,2), trap on (1,1)
+alpha = 0.5
+gamma = 0.9
+EPSILON = 0.7
+
+Q_table = {}
+for row in range(env.rows):
+    for col in range(env.cols):
+        Q_table[row, col] = [0] * 4`,
+    points: [
+      "The example maze is 3×3 with a wall on cell (1, 2) and a trap on cell (1, 1). The goal is (2, 2).",
+      "alpha is the learning rate: how much to believe new information. If a cell is worth 0 and the new target is 10, alpha = 0.5 moves it to 5. Alpha = 1 jumps to 10, and alpha = 0.1 only moves it to 1.",
+      "gamma is the discount: how much future reward matters. With gamma = 0.9, a reward 10 one step away is worth 9 now. Gamma near 0 only cares about right now, and gamma near 1 plans far ahead.",
+      "epsilon = 0.7 means 70% of moves are random exploration.",
+      "The Q-table holds 4 numbers per cell, one for each action. They all start at 0.",
+    ],
+  },
+  {
+    title: "choose_action: explore or exploit",
+    code: `def choose_action(r_state, c_state, epsilon):
+    if random.random() < epsilon:
+        return random.randint(0, 3)          # explore
+    else:
+        best = max(Q_table[r_state, c_state])
+        return Q_table[r_state, c_state].index(best)   # exploit`,
+    points: [
+      "With probability epsilon it picks a random action from 0 to 3.",
+      "Otherwise it takes the action with the biggest Q-value for the current cell.",
+      "At the start every Q is 0, so every action ties, and index() returns the first one: 0 = left. That is why an untrained agent keeps walking into the wall.",
+    ],
+  },
+  {
+    title: "The training loop",
+    code: `for episode in range(episodes):
+    r_state, c_state = env.reset()
+    done = False
+    steps = 0
+    while not done and steps < max_steps:
+        action = choose_action(r_state, c_state, EPSILON)
+        (next_r, next_c), reward, done = env.step(action)
+        update_q(r_state, c_state, action, reward, next_r, next_c, done)
+        r_state, c_state = next_r, next_c
+        steps += 1`,
+    points: [
+      "Every episode starts by putting the agent back on (0, 0), then runs until it reaches the goal or hits the step limit.",
+      "Each step: choose an action with epsilon = 0.7, take it, and get the new cell, the reward and done.",
+      "Then update_q learns from the step that just happened, and the agent moves on to the new cell.",
+      "The number of episodes grows with the maze size, so a bigger maze gets more training.",
+    ],
+  },
+  {
+    title: "update_q: the Q-learning update",
+    code: `def update_q(r_state, c_state, action, reward, next_r, next_c, done):
+    if done:
+        target = reward
+    else:
+        target = reward + gamma * max(Q_table[next_r, next_c])
+    Q_table[r_state, c_state][action] += alpha * (
+        target - Q_table[r_state, c_state][action]
+    )`,
+    points: [
+      "At the goal the target is just the reward, because nothing comes after it.",
+      "Otherwise target = reward + gamma × the best Q of the next cell. A step into the trap has reward -10, so those actions sink very low.",
+      "New Q = old Q + alpha × (target - old Q): move the old value a fraction alpha toward the target.",
+      "Worked example from the video: the first time the agent reaches the goal from cell (2,1) going right, Q = 0 + 0.5 × (10 - 0) = 5.0.",
+    ],
+  },
+  {
+    title: "run_greedy: a test run with no randomness",
+    code: `def run_greedy():
+    r_state, c_state = env.reset()
+    done = False
+    path = [(0, 0)]
+    steps = 0
+    while not done and steps < max_steps:
+        action = choose_action(r_state, c_state, 0)   # epsilon = 0
+        (r_state, c_state), reward, done = env.step(action)
+        path.append((r_state, c_state))
+        steps += 1
+    return path, steps`,
+    points: [
+      "It runs one episode with epsilon = 0: no learning, no randomness, only the best Q in each cell.",
+      "It records the path and the number of steps, so you can see what the agent has really learned after each episode.",
+    ],
+  },
 ];
 
-const results = [
-  "A 1D corridor agent that finds the shortest path (4 steps in a 5-cell corridor) by its second training episode.",
-  "A 2D maze agent in Python that reads any maze from a text file, with walls and traps, and checks that a path exists.",
-  "It trains for as many episodes as the maze needs, then prints the final greedy path and a policy grid of arrows.",
-  "A browser game where you draw your own maze, tune alpha, gamma and epsilon, and watch the Q-table fill in live.",
-  "An explainer video for each version, so the idea can be understood without reading code.",
-];
-
-const steps = [
-  { title: "Observe the state", text: "The agent is in a grid cell, for example (0, 0). That cell is its state." },
-  {
-    title: "Choose an action",
-    text: "With probability epsilon it tries a random direction (explore). Otherwise it takes the direction with the highest Q-value for that cell (exploit).",
-  },
-  {
-    title: "The environment responds",
-    text: "The maze moves the agent unless a wall blocks it, then returns the new cell and a reward: +10 at the goal, -10 on a trap, -1 for every other step. The -1 pushes the agent to find short paths.",
-  },
-  {
-    title: "Update the Q-table",
-    text: "Q(s, a) moves toward reward + gamma × max Q(next state), by a step of size alpha. This is the Q-learning update, and it is how the goal's reward slowly spreads backwards along the path.",
-  },
-  {
-    title: "Repeat",
-    text: "Run many episodes from the start cell. Afterwards, the greedy path (epsilon = 0) follows the best Q-value in each cell, and the policy grid shows one arrow per cell.",
-  },
-];
-
-const techStack = [
-  { name: "Python (standard library only)", role: "the maze environment, Q-table and Q-learning loop, with no Gym, NumPy or ML framework" },
-  { name: "Plain HTML, CSS and JavaScript", role: "the maze-editor game, a single page with the same Q-learning algorithm re-implemented for the browser" },
-  { name: "Vercel", role: "hosts the playable maze game" },
-  { name: "Node.js render scripts and Python audio mixing", role: "build the explainer videos in the q-corridor and q-grid folders" },
+const stuckRows = [
+  { when: "Before learning", result: "Q is 0 everywhere, so every action ties and the first one (left) wins: the agent bumps into the wall." },
+  { when: "After episodes 1 and 2", result: "At (0, 0) the least negative direction is still left, a wall. The agent stands still for 50 steps." },
+  { when: "After episodes 3 and 4", result: "Q at (0, 0) and (0, 1) has changed, so the agent gets one cell further each time, then hits another wall." },
+  { when: "After episode 5", result: "It walks (0,0) → (1,0) → (2,0) → (2,1) → (2,2) in 4 steps, around the trap and the wall." },
 ];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -62,18 +161,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
-  );
-}
-
-function BulletList({ items }: { items: string[] }) {
-  return (
-    <ul className="list-disc space-y-3 pl-5 marker:text-accent">
-      {items.map((item) => (
-        <li key={item} className="break-words">
-          {item}
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -93,7 +180,10 @@ export default function ReinforcementLearningPage() {
           </Link>
 
           <h1 className="mt-8 text-4xl font-bold tracking-tight break-words sm:text-5xl">{PROJECT_NAME}</h1>
-          <p className="mt-4 text-lg text-muted">{project.description}</p>
+          <p className="mt-4 text-lg text-muted">
+            A walkthrough of the Python code (<code>2DGrid.py</code>) behind the agent, following the explainer video
+            below.
+          </p>
           <div className="mt-6 flex flex-wrap gap-3">
             {project.demoUrl && (
               <ButtonLink href={project.demoUrl} variant="filled">
@@ -103,68 +193,58 @@ export default function ReinforcementLearningPage() {
             <ButtonLink href={project.github}>GitHub</ButtonLink>
           </div>
 
-          <Section title="The Problem">
-            <BulletList items={problems} />
-          </Section>
+          <video
+            className="mt-8 w-full rounded-2xl border border-border"
+            controls
+            preload="metadata"
+            poster="/videos/q-grid-poster.jpg"
+          >
+            <source src="/videos/q-grid.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
 
-          <Section title="Results">
-            <BulletList items={results} />
-          </Section>
-
-          <Section title="How It Works">
-            <p className="mb-4 text-muted">
-              Q-learning keeps a table with one score per (cell, direction) pair. The agent plays the loop below until
-              the scores tell it where to go.
-            </p>
-            <ol className="space-y-3">
-              {steps.map((step, i) => (
-                <li key={step.title} className="rounded-2xl border border-border px-4 py-4 sm:px-6">
+          <Section title="Code walkthrough">
+            <ol className="space-y-6">
+              {blocks.map((b, i) => (
+                <li key={b.title} className="rounded-2xl border border-border px-4 py-4 sm:px-6">
                   <h3 className="font-semibold">
                     <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary align-middle text-sm text-on-primary">
                       {i + 1}
                     </span>
-                    {step.title}
+                    {b.title}
                   </h3>
-                  <p className="mt-2 text-muted">{step.text}</p>
+                  <pre className="mt-3 overflow-x-auto rounded-xl bg-surface p-4 text-sm leading-relaxed">
+                    <code>{b.code}</code>
+                  </pre>
+                  <ul className="mt-3 list-disc space-y-2 pl-5 text-muted marker:text-accent">
+                    {b.points.map((p) => (
+                      <li key={p} className="break-words">
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ol>
           </Section>
 
-          <Section title="Why I chose this for my portfolio">
-            <div className="space-y-4">
-              <p>
-                I wanted to learn reinforcement learning by building it, not by calling a library. So I started with the
-                smallest possible world, a five-cell corridor, and wrote the environment, the Q-table and the update
-                rule myself. Watching the agent&apos;s first episode wander for 50 steps and its second walk straight to
-                the goal made the idea click.
-              </p>
-              <p>
-                The 2D maze made me think about the details tutorials skip: what happens when the agent walks into a
-                wall, how many steps an episode should be allowed, why a bigger grid needs more episodes, and how to
-                reject a maze that has no path from start to goal.
-              </p>
-              <p>
-                I then rebuilt the same algorithm in JavaScript as a game, so other people can change alpha, gamma and
-                epsilon and see what each one does. Explaining it that way, and in a video, showed me which parts I
-                understood and which I had only memorized.
-              </p>
-              <p>
-                It is a small project and it only covers tabular Q-learning. But it is the base I want to build on
-                toward deep Q-networks and policy gradients, and it is the kind of ML fundamentals I hope to use in an
-                AI or ML internship.
-              </p>
-            </div>
-          </Section>
-
-          <Section title="Tech Stack">
-            <ul className="list-disc space-y-3 pl-5 marker:text-accent">
-              {techStack.map((item) => (
-                <li key={item.name} className="break-words">
-                  <strong className="font-semibold">{item.name}</strong>: {item.role}
+          <Section title="Why is the agent stuck in the first episodes?">
+            <p className="mb-4 text-muted">
+              The test run from <code>run_greedy</code> after each training episode shows how the Q-table slowly turns
+              into a route.
+            </p>
+            <ul className="space-y-3">
+              {stuckRows.map((r) => (
+                <li key={r.when} className="rounded-2xl border border-border px-4 py-4 sm:px-6">
+                  <strong className="font-semibold">{r.when}</strong>
+                  <p className="mt-1 text-muted">{r.result}</p>
                 </li>
               ))}
             </ul>
+            <p className="mt-4">
+              After 200 episodes it picks the best Q in every cell and the policy points away from the trap and toward
+              the goal. Nobody told the agent where the goal is: it learned only from reward.
+            </p>
           </Section>
         </article>
       </main>
