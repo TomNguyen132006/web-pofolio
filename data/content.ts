@@ -130,7 +130,7 @@ export const projects: Project[] = [
     detailsUrl: "/projects/reinforcement-learning", // page: app/projects/reinforcement-learning/page.tsx
     image: "/images/rl-cover.svg",
     imageAlt:
-      "Line illustration of a reinforcement learning loop: an agent sends actions to a grid maze, which returns a state and a reward",
+      "Cartoon mouse at the entrance of a square maze, with a red dashed route leading to a piece of cheese at the exit",
     imageFit: "contain",
     initials: "RL",
   },

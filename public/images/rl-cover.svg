@@ -1,33 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-labelledby="t">
-  <title id="t">Line illustration of a reinforcement learning loop: an agent sends actions to a grid maze environment, which returns a new state and a reward</title>
+  <title id="t">Illustration of a cartoon mouse at the entrance of a square maze, with a red dashed route leading to a piece of cheese at the exit</title>
   <rect width="800" height="400" fill="#F5E4E6"/>
-  <g fill="none" stroke="#272341" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-    <!-- agent (left) -->
-    <rect x="70" y="140" width="160" height="120" rx="16"/>
-    <circle cx="150" cy="185" r="16"/>
-    <path d="M150 201V225M132 212H168"/>
-    <path d="M110 245H190" stroke="#7A0A1A"/>
 
-    <!-- environment: 4x4 grid maze (right) -->
-    <rect x="520" y="110" width="200" height="180" rx="8"/>
-    <path d="M570 110V290M620 110V290M670 110V290M520 155H720M520 200H720M520 245H720"/>
-    <path d="M620 155V245" stroke-width="9"/>
-    <path d="M672 202l16 16M688 202l-16 16" stroke="#7A0A1A"/>
-    <circle cx="545" cy="132" r="8" fill="#272341"/>
-    <path d="M695 258l8 8 14-16" stroke="#7A0A1A"/>
+  <!-- maze -->
+  <path d="M280 120V320H520M520 280V80H280 M280 120h40 M320 120h40 M400 120h40 M440 120h40 M320 160h40 M400 160h40 M480 160h40 M280 200h40 M360 200h40 M400 200h40 M320 240h40 M360 240h40 M480 240h40 M280 280h40 M360 280h40 M400 80v40 M480 80v40 M400 120v40 M440 120v40 M320 160v40 M480 160v40 M360 200v40 M440 200v40 M360 240v40 M440 240v40 M480 240v40 M320 280v40 M400 280v40" fill="none" stroke="#272341" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- learned route -->
+  <path d="M250 100 L300 100 L340 100 L380 100 L380 140 L380 180 L420 180 L460 180 L460 220 L460 260 L460 300 L500 300 L550 300" fill="none" stroke="#7A0A1A" stroke-width="5" stroke-dasharray="3 11" stroke-linecap="round" stroke-linejoin="round"/>
 
-    <!-- action arrow (top) -->
-    <path d="M240 175C320 95 430 95 510 160" stroke="#7A0A1A" stroke-width="6"/>
-    <path d="M488 150L511 162L503 137" stroke="#7A0A1A" stroke-width="6"/>
-
-    <!-- state + reward arrow (bottom) -->
-    <path d="M510 240C430 320 320 320 240 245"/>
-    <path d="M262 253L239 243L247 268"/>
+  <!-- mouse (left, at the entrance) -->
+  <g transform="translate(95 96)">
+    <path d="M10 70 C-30 70 -40 40 -75 45" fill="none" stroke="#C9A27A" stroke-width="6" stroke-linecap="round"/>
+    <ellipse cx="55" cy="62" rx="62" ry="40" fill="#9A5B33"/>
+    <circle cx="106" cy="40" r="20" fill="#9A5B33"/>
+    <circle cx="96" cy="16" r="13" fill="#C9A27A"/><circle cx="96" cy="16" r="13" fill="none" stroke="#9A5B33" stroke-width="3"/>
+    <circle cx="124" cy="52" r="5" fill="#272341"/>
+    <circle cx="116" cy="36" r="4" fill="#272341"/>
+    <path d="M122 48 l22 -6 M122 54 l22 4" stroke="#272341" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="40" cy="98" rx="16" ry="6" fill="#C9A27A"/><ellipse cx="82" cy="98" rx="16" ry="6" fill="#C9A27A"/>
   </g>
-  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="600" fill="#272341" text-anchor="middle">
-    <text x="375" y="78" fill="#7A0A1A">action</text>
-    <text x="375" y="352">state + reward</text>
-    <text x="150" y="295">agent</text>
-    <text x="620" y="325">environment</text>
+
+  <!-- cheese (right, at the exit) -->
+  <g transform="translate(610 262)" stroke="#272341" stroke-width="4" stroke-linejoin="round">
+    <path d="M0 70 L10 20 L100 45 L100 70 Z" fill="#F7C948"/>
+    <path d="M10 20 L100 45" fill="none"/>
+    <path d="M0 70 L100 70" fill="none"/>
+    <circle cx="35" cy="52" r="7" fill="#E8A92B" stroke="none"/>
+    <circle cx="65" cy="58" r="5" fill="#E8A92B" stroke="none"/>
+    <circle cx="82" cy="50" r="4" fill="#E8A92B" stroke="none"/>
   </g>
 </svg>
