@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" aria-labelledby="t">
+  <title id="t">Line illustration of a reinforcement learning loop: an agent sends actions to a grid maze environment, which returns a new state and a reward</title>
+  <rect width="800" height="400" fill="#F5E4E6"/>
+  <g fill="none" stroke="#272341" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- agent (left) -->
+    <rect x="70" y="140" width="160" height="120" rx="16"/>
+    <circle cx="150" cy="185" r="16"/>
+    <path d="M150 201V225M132 212H168"/>
+    <path d="M110 245H190" stroke="#7A0A1A"/>
+
+    <!-- environment: 4x4 grid maze (right) -->
+    <rect x="520" y="110" width="200" height="180" rx="8"/>
+    <path d="M570 110V290M620 110V290M670 110V290M520 155H720M520 200H720M520 245H720"/>
+    <path d="M620 155V245" stroke-width="9"/>
+    <path d="M672 202l16 16M688 202l-16 16" stroke="#7A0A1A"/>
+    <circle cx="545" cy="132" r="8" fill="#272341"/>
+    <path d="M695 258l8 8 14-16" stroke="#7A0A1A"/>
+
+    <!-- action arrow (top) -->
+    <path d="M240 175C320 95 430 95 510 160" stroke="#7A0A1A" stroke-width="6"/>
+    <path d="M488 150L511 162L503 137" stroke="#7A0A1A" stroke-width="6"/>
+
+    <!-- state + reward arrow (bottom) -->
+    <path d="M510 240C430 320 320 320 240 245"/>
+    <path d="M262 253L239 243L247 268"/>
+  </g>
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="600" fill="#272341" text-anchor="middle">
+    <text x="375" y="78" fill="#7A0A1A">action</text>
+    <text x="375" y="352">state + reward</text>
+    <text x="150" y="295">agent</text>
+    <text x="620" y="325">environment</text>
+  </g>
+</svg>

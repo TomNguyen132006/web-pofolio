@@ -117,6 +117,23 @@ export const projects: Project[] = [
     imageFit: "contain",
     initials: "LQ",
   },
+  {
+    name: "Q-Learning Maze Agent",
+    description:
+      "A tabular Q-learning agent that learns to walk a grid maze from scratch, plus a browser game where you draw your own maze and watch it learn.",
+    learnedLabel: "Goal",
+    learned:
+      "Understand reinforcement learning by building the whole loop myself: an environment, a Q-table, epsilon-greedy exploration and the Q-learning update.",
+    tech: ["Python", "Q-learning", "JavaScript", "HTML/CSS"],
+    github: "https://github.com/TomNguyen132006/reinforcement-learning",
+    demoUrl: "https://chuot-q-maze.vercel.app", // maze editor game, hosted on Vercel
+    detailsUrl: "/projects/reinforcement-learning", // page: app/projects/reinforcement-learning/page.tsx
+    image: "/images/rl-cover.svg",
+    imageAlt:
+      "Line illustration of a reinforcement learning loop: an agent sends actions to a grid maze, which returns a state and a reward",
+    imageFit: "contain",
+    initials: "RL",
+  },
 ];
 
 export const skills: Skills = {
